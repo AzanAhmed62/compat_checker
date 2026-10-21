@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Release builds must use HTTPS. Debug builds override this file with
+     localhost/emulator exceptions for local Supabase development. -->
+<network-security-config>
+  <base-config cleartextTrafficPermitted="false" />
+</network-security-config>

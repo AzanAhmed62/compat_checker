@@ -1,6 +1,0 @@
-{
-  "name": "Compat Checker",
-  "description": "Evidence-based hardware and repair component compatibility checker with verified specs and community teardowns.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}

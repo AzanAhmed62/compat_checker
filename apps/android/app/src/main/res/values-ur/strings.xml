@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="app_name">کمپیٹ چیکر</string>
+  <string name="app_tagline">شواہد پر مبنی ہارڈویئر مطابقت</string>
+  <string name="configuration_required">ترتیب درکار ہے</string>
+  <string name="configuration_help">apps/android/local.properties میں SUPABASE_URL اور SUPABASE_ANON_KEY مقرر کریں۔ صرف عوامی anon کلید استعمال کریں۔</string>
+
+  <string name="tab_browse">براؤز</string>
+  <string name="tab_checker">چیکر</string>
+  <string name="tab_guides">رہنما</string>
+  <string name="tab_requests">درخواستیں</string>
+  <string name="tab_profile">پروفائل</string>
+
+  <string name="action_retry">دوبارہ کوشش</string>
+  <string name="action_sign_in">سائن ان</string>
+  <string name="action_sign_out">سائن آؤٹ</string>
+  <string name="action_create_account">اکاؤنٹ بنائیں</string>
+  <string name="action_back">واپس</string>
+  <string name="action_cancel">منسوخ</string>
+  <string name="action_save">محفوظ کریں</string>
+  <string name="action_submit">جمع کریں</string>
+  <string name="action_send">بھیجیں</string>
+  <string name="action_confirm">تصدیق</string>
+  <string name="action_dispute">اعتراض</string>
+  <string name="action_favorite">محفوظ کریں</string>
+  <string name="action_unfavorite">محفوظ شدہ</string>
+  <string name="action_compare">موازنہ کریں</string>
+  <string name="action_choose">منتخب کریں</string>
+  <string name="action_clear">صاف کریں</string>
+  <string name="action_mark_all_read">سب پڑھا ہوا نشان زد کریں</string>
+  <string name="action_request_deletion">اکاؤنٹ حذف کرنے کی درخواست</string>
+  <string name="action_cancel_deletion">حذف کی درخواست منسوخ کریں</string>
+  <string name="action_edit_profile">پروفائل میں ترمیم</string>
+  <string name="action_view_all">سب دیکھیں</string>
+  <string name="action_report">رپورٹ</string>
+  <string name="action_new_request">نئی درخواست</string>
+
+  <string name="state_loading">لوڈ ہو رہا ہے…</string>
+  <string name="state_no_results">کوئی نتیجہ نہیں</string>
+  <string name="state_empty">ابھی کچھ نہیں</string>
+  <string name="state_offline">آف لائن: محفوظ نتائج دکھائے جا رہے ہیں</string>
+  <string name="state_unknown">مطابقت نامعلوم</string>
+  <string name="state_compatible">مطابق</string>
+  <string name="state_incompatible">غیر مطابق</string>
+  <string name="unknown_explanation">اس جوڑی کے لیے کوئی واضح شائع شدہ قاعدہ موجود نہیں۔ کمپیٹ چیکر اندازہ نہیں لگاتا۔</string>
+  <string name="incompatible_explanation">کم از کم ایک شائع شدہ قاعدہ کہتا ہے کہ یہ مصنوعات مطابق نہیں۔ کمزور مثبت دعوے اسے رد نہیں کر سکتے۔</string>
+  <string name="compatible_explanation">شائع شدہ قواعد ان مصنوعات کو جوڑتے ہیں۔ انحصار سے پہلے شواہد اور مطلوبہ تبدیلیاں دیکھیں۔</string>
+
+  <string name="search_hint">نام، ماڈل یا عرف تلاش کریں</string>
+  <string name="all_categories">تمام اقسام</string>
+  <string name="load_more">مزید دکھائیں</string>
+  <string name="rules_count">%1$d قواعد</string>
+  <string name="products_count">%1$d مصنوعات</string>
+  <string name="comments_count">%1$d تبصرے</string>
+
+  <string name="section_overview">جائزہ</string>
+  <string name="section_specifications">تفصیلات</string>
+  <string name="section_aliases">دیگر نام</string>
+  <string name="section_compatibility">مطابقت</string>
+  <string name="section_guides">رہنما</string>
+  <string name="section_comments">تبادلۂ خیال</string>
+  <string name="section_evidence">شواہد</string>
+  <string name="section_technical_details">تکنیکی تفصیل</string>
+  <string name="section_required_modifications">مطلوبہ تبدیلیاں</string>
+  <string name="section_votes">کمیونٹی ووٹ</string>
+  <string name="section_correction">تصحیح تجویز کریں</string>
+  <string name="section_reputation">ساکھ</string>
+  <string name="no_rules">ابھی اس مصنوع کے لیے کوئی واضح قاعدہ شائع نہیں ہوا۔</string>
+  <string name="no_guides">ابھی کوئی شائع شدہ رہنما نہیں۔</string>
+  <string name="add_comment">تبصرہ شامل کریں</string>
+  <string name="comment_hint">حقیقی مشاہدہ شیئر کریں۔ غیر محفوظ مشورے نہ دیں۔</string>
+  <string name="comment_posted">تبصرہ شائع ہو گیا</string>
+  <string name="comment_sign_in">گفتگو میں شامل ہونے کے لیے سائن ان کریں۔</string>
+  <string name="favorite_sign_in">مصنوعات محفوظ کرنے کے لیے سائن ان کریں۔</string>
+  <string name="favorite_added">پسندیدہ میں محفوظ ہو گیا</string>
+  <string name="favorite_removed">پسندیدہ سے ہٹا دیا گیا</string>
+  <string name="evidence_count">%1$d شواہد</string>
+  <string name="confidence_value">%1$d%% اعتماد</string>
+  <string name="votes_confirm_dispute">%1$d تصدیق · %2$d اعتراض</string>
+
+  <string name="checker_title">مطابقت چیکر</string>
+  <string name="checker_subtitle">دو شائع شدہ مصنوعات کا موازنہ کریں۔ نتائج صرف واضح قواعد سے آتے ہیں۔</string>
+  <string name="checker_product_a">مصنوع A</string>
+  <string name="checker_product_b">مصنوع B</string>
+  <string name="checker_choose_a">مصنوع A منتخب کریں</string>
+  <string name="checker_choose_b">مصنوع B منتخب کریں</string>
+  <string name="checker_run">مطابقت چیک کریں</string>
+  <string name="checker_need_both">دو مختلف مصنوعات منتخب کریں۔</string>
+  <string name="checker_pick_title">مصنوع منتخب کریں</string>
+  <string name="checker_no_rule">نامعلوم: اس جوڑی کے لیے کوئی شائع شدہ قاعدہ نہیں۔</string>
+  <string name="checker_same_product">موازنے کے لیے دو مختلف مصنوعات منتخب کریں۔</string>
+
+  <string name="guides_title">مرمت کے رہنما</string>
+  <string name="guide_steps">مراحل</string>
+  <string name="requests_title">کمیونٹی درخواستیں</string>
+  <string name="request_title_label">عنوان</string>
+  <string name="request_description_label">تفصیل</string>
+  <string name="request_category_label">قسم (اختیاری)</string>
+  <string name="request_submitted">درخواست جمع ہو گئی</string>
+  <string name="request_sign_in">درخواست یا ووٹ کے لیے سائن ان کریں۔</string>
+  <string name="request_votes">%1$d ووٹ</string>
+  <string name="new_request_title">نئی مصنوع کی درخواست</string>
+
+  <string name="auth_title">سائن ان</string>
+  <string name="auth_subtitle">صرف محفوظ کرنے، ووٹ، تبصرہ، درخواست یا تعاون کے لیے سائن ان کریں۔</string>
+  <string name="auth_register_title">اکاؤنٹ بنائیں</string>
+  <string name="auth_email">ای میل</string>
+  <string name="auth_password">پاس ورڈ</string>
+  <string name="auth_display_name">ظاہری نام (اختیاری)</string>
+  <string name="auth_no_account">نئے ہیں؟ اکاؤنٹ بنائیں</string>
+  <string name="auth_have_account">پہلے سے اکاؤنٹ ہے؟ سائن ان کریں</string>
+  <string name="auth_password_rule">کم از کم 12 حروف استعمال کریں۔</string>
+  <string name="auth_required">جاری رکھنے کے لیے سائن ان کریں</string>
+
+  <string name="profile_title">پروفائل</string>
+  <string name="profile_guest_title">آپ کا اکاؤنٹ</string>
+  <string name="profile_guest_body">عوامی براؤزنگ بغیر اکاؤنٹ کے ممکن ہے۔ پسندیدہ، ووٹ، تبصرے، درخواستیں، تعاون اور اطلاعات کے لیے سائن ان کریں۔</string>
+  <string name="profile_favorites">پسندیدہ</string>
+  <string name="profile_contributions">تعاون</string>
+  <string name="profile_notifications">اطلاعات</string>
+  <string name="profile_settings">ترتیبات</string>
+  <string name="favorites_title">پسندیدہ</string>
+  <string name="favorites_empty">ابھی کوئی محفوظ مصنوع نہیں۔</string>
+  <string name="contributions_title">میرے تعاون</string>
+  <string name="notifications_title">اطلاعات</string>
+  <string name="notifications_empty">ابھی کوئی اطلاع نہیں۔</string>
+  <string name="settings_title">ترتیبات</string>
+  <string name="settings_appearance">ظاہری شکل</string>
+  <string name="settings_theme_system">سسٹم</string>
+  <string name="settings_theme_light">روشن</string>
+  <string name="settings_theme_dark">تاریک</string>
+  <string name="settings_language">زبان</string>
+  <string name="settings_language_system">سسٹم زبان</string>
+  <string name="settings_language_english">English</string>
+  <string name="settings_language_urdu">اردو</string>
+
+  <string name="error_generic">کچھ غلط ہو گیا</string>
+  <string name="error_auth_required">جاری رکھنے کے لیے سائن ان کریں</string>
+  <string name="error_config">ترتیب مکمل ہونے تک کمپیٹ چیکر شروع نہیں ہو سکتا۔</string>
+  <string name="choose_product">مصنوع منتخب کریں</string>
+</resources>

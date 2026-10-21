@@ -1,0 +1,79 @@
+package com.compatchecker.app.domain.repository
+
+import com.compatchecker.app.domain.model.AppNotification
+import com.compatchecker.app.domain.model.AuthSession
+import com.compatchecker.app.domain.model.Brand
+import com.compatchecker.app.domain.model.Category
+import com.compatchecker.app.domain.model.Comment
+import com.compatchecker.app.domain.model.CommunityRequest
+import com.compatchecker.app.domain.model.CompatibilityResult
+import com.compatchecker.app.domain.model.Contribution
+import com.compatchecker.app.domain.model.GuideDetail
+import com.compatchecker.app.domain.model.GuideSummary
+import com.compatchecker.app.domain.model.ProductDetail
+import com.compatchecker.app.domain.model.ProductSummary
+import com.compatchecker.app.domain.model.Reputation
+import com.compatchecker.app.domain.model.RuleDetail
+import com.compatchecker.app.domain.model.SearchPage
+import com.compatchecker.app.domain.model.UserProfile
+import kotlinx.coroutines.flow.Flow
+import kotlinx.serialization.json.JsonObject
+
+interface AuthRepository {
+    val session: Flow<AuthSession?>
+    suspend fun currentSession(): AuthSession?
+    suspend fun signIn(email: String, password: String)
+    suspend fun signUp(email: String, password: String, displayName: String?)
+    suspend fun signOut()
+}
+
+interface CatalogRepository {
+    suspend fun search(query: String, categorySlug: String?, limit: Int, offset: Int): SearchPage
+    suspend fun categories(): List<Category>
+    suspend fun brands(): List<Brand>
+    suspend fun product(id: String): ProductDetail
+    suspend fun toggleFavorite(productId: String): Boolean
+    suspend fun favorites(): List<ProductSummary>
+    suspend fun cachedProduct(id: String): ProductDetail?
+}
+
+interface CompatibilityRepository {
+    suspend fun check(productA: String, productB: String): CompatibilityResult
+    suspend fun rule(ruleId: String): RuleDetail
+    suspend fun castVote(ruleId: String, vote: String): RuleDetail
+}
+
+interface GuideRepository {
+    suspend fun guides(): List<GuideSummary>
+    suspend fun guide(id: String): GuideDetail
+}
+
+interface CommunityRepository {
+    suspend fun requests(): List<CommunityRequest>
+    suspend fun createRequest(title: String, description: String, categoryId: String?): String
+    suspend fun toggleRequestVote(requestId: String): Int
+    suspend fun comments(targetType: String, targetId: String): List<Comment>
+    suspend fun addComment(targetType: String, targetId: String, body: String): Comment
+    suspend fun report(targetType: String, targetId: String, reason: String, details: String?)
+}
+
+interface ProfileRepository {
+    suspend fun me(): UserProfile
+    suspend fun updateProfile(displayName: String?, bio: String?, locale: String?): UserProfile
+    suspend fun reputation(): Reputation
+    suspend fun contributions(): List<Contribution>
+    suspend fun submitProductCorrection(productId: String, patch: JsonObject): String
+    suspend fun notifications(): List<AppNotification>
+    suspend fun markNotificationRead(id: String)
+    suspend fun markAllNotificationsRead()
+    suspend fun requestAccountDeletion(): String
+    suspend fun cancelAccountDeletion()
+}
+
+interface PreferencesRepository {
+    val preferences: Flow<UserPreferences>
+    suspend fun setThemeMode(mode: String)
+    suspend fun setLanguage(language: String)
+}
+
+data class UserPreferences(val themeMode: String = "system", val language: String = "system")

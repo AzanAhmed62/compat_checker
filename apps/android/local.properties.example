@@ -1,0 +1,7 @@
+# Copy to apps/android/local.properties (untracked).
+# Android Studio normally adds sdk.dir. If building from the command line,
+# set it to your SDK location, for example:
+# sdk.dir=C\:\\Users\\you\\AppData\\Local\\Android\\Sdk
+# Use the project URL and the public anon/publishable key only.
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-public-anon-key
