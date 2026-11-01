@@ -56,6 +56,28 @@ jobs:
       - run: npm test
       - run: npm run build
 
+  edge-functions:
+    name: Edge Function typecheck and tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: "2.9.6"
+      - name: Typecheck handlers, shared auth, and tests
+        run: >-
+          deno check
+          supabase/functions/_shared/auth.ts
+          supabase/functions/admin-csv/index.ts
+          supabase/functions/admin-csv/handler.ts
+          supabase/functions/purge-pending-accounts/index.ts
+          supabase/functions/purge-pending-accounts/handler.ts
+          supabase/functions/tests/auth_test.ts
+          supabase/functions/tests/admin_csv_test.ts
+          supabase/functions/tests/purge_test.ts
+      - name: Run Edge Function tests
+        run: deno test --allow-env supabase/functions/tests
+
   android:
     name: Android build and unit tests
     runs-on: ubuntu-latest
@@ -75,6 +97,8 @@ jobs:
           sdkmanager --package_file="$RUNNER_TEMP/android-packages.txt"
       - uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: "8.13"
-      - name: Assemble debug and run unit tests
-        run: gradle :app:assembleDebug :app:testDebugUnitTest --no-daemon
+          gradle-version: "8.14.5"
+      - name: Assemble debug, unit tests, and instrumentation test APK
+        run: >-
+          gradle :app:assembleDebug :app:testDebugUnitTest :app:assembleDebugAndroidTest
+          --no-daemon --no-configuration-cache --max-workers=1

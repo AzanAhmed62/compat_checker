@@ -50,7 +50,7 @@ It does not query the graph, infer missing links, or merge similar products. The
 - `admin-csv`: authenticated admin CSV import/export bridge. It verifies the caller's JWT, resolves the profile role, and calls admin-only RPCs through a **caller-scoped** client so RLS/RPC role checks remain authoritative. It does not use a service-role client. It is configured with `verify_jwt = true`.
 - `purge-pending-accounts`: scheduled worker guarded by `PURGE_CRON_SECRET`, invoking the service-role-only purge function. It does not accept user JWTs. It is configured with `verify_jwt = false` because the shared secret is the authentication mechanism.
 
-Docker, Supabase CLI, and Deno are not installed in the current environment. Edge Functions therefore have source review but no local execution evidence yet.
+Docker, the Supabase CLI, and Deno are now available in this workspace. Edge Function handlers are typechecked and covered by local execution tests; the full Supabase runtime has not been started or exercised here. Instrumented Compose tests compile, but no usable emulator/device session has run them. See `docs/KNOWN_ISSUES.md` for current blockers.
 
 ## Android client
 
@@ -89,9 +89,9 @@ UI (Compose screens, UDF state)
 ## Testing and delivery
 
 - SQL tests run against a disposable local PostgreSQL database using a test-only Supabase shim. They are not run against production.
-- Admin tests cover CSV and permission helpers with Vitest.
-- Android unit tests target ViewModel and mapping behavior; instrumentation/Compose tests require an emulator.
-- CI is defined for database, admin, and Android jobs. Lack of Docker/Supabase CLI means CI must use a PostgreSQL service container plus the shim runner, not `supabase start`.
+- Admin tests cover CSV and permission helpers with Vitest. The public `/privacy` and `/delete-account` surfaces are typechecked and built but have no live-backend UI test yet.
+- Android unit tests target ViewModel and mapping behavior. Compose instrumentation tests cover the checker result states; they compile in CI but require an emulator/device to execute.
+- CI is defined for database, admin, Edge Function, and Android jobs. It has not run remotely. The database CI job uses a PostgreSQL service container plus the shim runner, not `supabase start`.
 - No remote Supabase project, Play signing key, or other production credential is used in this repository.
 
 ## Architectural decisions and trade-offs

@@ -14,22 +14,26 @@
 
 ### Admin console
 - Login/auth gate, role-aware navigation, dashboard, catalog CRUD, rules/evidence and rollback, reports, contributions, comments, requests, users/roles, guides, media, analytics, audit logs, CSV tools.
+- Public `/privacy` and `/delete-account` routes with configurable data-controller and support contact.
 - Typecheck, Vitest suite, and production build passing.
+
+### Edge Functions
+- `admin-csv` and `purge-pending-accounts` split into testable handlers with restrictive exact-origin CORS, auth/RPC error mapping, bounded CSV import, formula neutralization, and bounded service-role purge.
+- Deno typecheck and 24 handler tests pass locally.
 
 ### Android
 - Kotlin/Compose Material 3 app with manual DI, navigation, deep links, debug-only local HTTP exceptions, build-time configuration validation, English/Urdu resources, and RTL support.
 - Data layer for Supabase Auth/PostgREST, Room offline cache, DataStore preferences, and domain repository interfaces.
 - Catalog/search, product detail, checker, rules/evidence, guides, requests, auth, profile, favorites, contributions, notifications, and settings screens.
-- `:app:assembleDebug` passes; 7 JVM unit tests pass across 3 test classes. The debug APK is 24.48 MiB. No device/emulator or live backend runtime has been exercised.
+- `:app:assembleDebug` passes; JVM unit tests pass. Compose instrumentation tests for checker result states compile; no device/emulator or live backend runtime has been exercised.
 
 ## Next
 
 1. Run a full Supabase stack (Auth, PostgREST, Storage, Realtime disabled) and exercise admin and app flows against it.
-2. Validate Edge Functions with Deno/Supabase CLI in an authorized environment.
-3. Add Android instrumentation/Compose tests, install the APK on a device/emulator, and complete a TalkBack/RTL/font-scale accessibility pass.
-4. Execute the defined GitHub Actions CI workflow (database, admin, Android) on a runner; it has not been run remotely yet.
-6. Produce a signed AAB and complete Play Console data-safety declarations.
-7. Conduct a security review of admin actions, rate limits, and secret handling before production.
+2. Compile and run the Compose instrumentation tests on a booted emulator/device, then complete a TalkBack/RTL/font-scale accessibility pass.
+3. Execute the defined GitHub Actions workflow (database, admin, Edge Functions, Android) on a runner; it has not been run remotely yet.
+4. Produce a signed AAB and complete Play Console data-safety declarations, including deployed privacy and deletion URLs.
+5. Conduct a security review of admin actions, rate limits, and secret handling before production.
 
 ## Later
 

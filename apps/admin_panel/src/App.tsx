@@ -20,6 +20,8 @@ import { AnalyticsPage } from './pages/AnalyticsPage';
 import { AuditPage } from './pages/AuditPage';
 import { ImportsPage } from './pages/ImportsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { PrivacyPage } from './pages/PrivacyPage';
+import { DeleteAccountPage } from './pages/DeleteAccountPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -223,6 +225,8 @@ export function App() {
           <AuthProvider>
             <Routes>
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/privacy" element={<PrivacyPage />} />
+              <Route path="/delete-account" element={<DeleteAccountPage />} />
               <Route path="/*" element={<ProtectedApp />} />
             </Routes>
           </AuthProvider>

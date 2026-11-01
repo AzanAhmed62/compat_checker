@@ -5,6 +5,8 @@
 - The Android app and admin console are untrusted clients. They hold only the public anon/publishable key.
 - PostgreSQL RLS, owner-rights views, and `SECURITY DEFINER` functions are the authorization boundary.
 - Edge Functions are separate trust boundaries. `admin-csv` verifies a user JWT and admin role. `purge-pending-accounts` verifies a high-entropy shared secret and is intended for a scheduler.
+- Edge Function CORS allows only exact origins from `ADMIN_ORIGIN` (comma-separated). A wildcard is ignored, and unset configuration falls back to local development origins only. Requests with a disallowed browser `Origin` are rejected before authentication.
+- The public `/privacy` and `/delete-account` routes are served by the admin web app but are not admin routes. Deletion calls the same authenticated user RPCs as the app; no service-role client is exposed.
 - Supabase service-role keys exist only in server-side Edge Function secrets or the local test environment. They must never enter a client bundle, screenshot, log, or repository file.
 
 ## Key handling
@@ -13,9 +15,9 @@
 - `AppConfig` rejects:
   - non-HTTPS URLs in release builds (debug permits HTTP only for emulator/local hosts)
   - keys prefixed `sb_secret_`
-- The main network-security config denies all cleartext. Only the debug source set overrides it for `10.0.2.2`, `localhost`, and `127.0.0.1`.
   - JWTs whose decoded payload declares `service_role`
-- Admin environment variables use Vite's `VITE_` prefix and must contain only the public key.
+- The main network-security config denies all cleartext. Only the debug source set overrides it for `10.0.2.2`, `localhost`, and `127.0.0.1`.
+- Admin environment variables use Vite's `VITE_` prefix and must contain only the public key. `VITE_DATA_CONTROLLER` and `VITE_SUPPORT_EMAIL` are public deployment metadata, never secrets.
 - Release signing material is read from untracked local properties/environment and is required for release tasks. Keystores and passwords are not committed.
 - `.env`, `local.properties`, keystores, and build output are ignored.
 
@@ -71,7 +73,7 @@
 ## Known residual risks
 
 - No live PostgREST/Supabase instance has validated runtime headers, function exposure, or Edge Function behavior in this environment. This is a deployment-blocking verification item, not a claim of security.
-- Docker/Supabase CLI are unavailable, so the full Supabase storage/auth runtime has not been exercised locally; SQL tests use a shim.
+- Docker, the Supabase CLI, and Deno are available locally, but the full Supabase Auth/PostgREST/Storage runtime has not been exercised; SQL tests still use a shim and Edge Function tests use in-process handler fakes.
 - No penetration test, dependency audit enforcement, rate-limit load test, or production monitoring has been performed.
 - A compromised admin account can perform all admin actions by design; MFA and alerting are deployment requirements.
 - Client-side secrets are never acceptable. If a service-role key is ever exposed, rotate it immediately and review logs.

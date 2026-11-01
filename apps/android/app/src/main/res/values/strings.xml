@@ -101,7 +101,10 @@
   <string name="checker_pick_title">Choose a product</string>
   <string name="checker_no_rule">Unknown: no published rule for this exact pair.</string>
   <string name="checker_same_product">Choose two different products to compare.</string>
-  <string name="checker_summary">%1$d published rules were evaluated. Incompatibility takes precedence.</string>
+  <plurals name="checker_summary">
+    <item quantity="one">%1$d published rule was evaluated. Incompatibility takes precedence.</item>
+    <item quantity="other">%1$d published rules were evaluated. Incompatibility takes precedence.</item>
+  </plurals>
   <string name="checker_checked">Checked %1$s</string>
 
   <string name="guides_title">Repair guides</string>

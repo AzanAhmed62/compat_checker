@@ -32,6 +32,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -167,7 +168,7 @@ private fun ProductSlot(
 }
 
 @Composable
-private fun ResultSummary(result: CompatibilityResult) {
+internal fun ResultSummary(result: CompatibilityResult) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             OutcomeBadge(result.outcome)
@@ -176,7 +177,7 @@ private fun ResultSummary(result: CompatibilityResult) {
                 Text(stringResource(R.string.checker_same_product), style = MaterialTheme.typography.bodyMedium)
             } else if (result.known) {
                 Text(
-                    stringResource(R.string.checker_summary, result.ruleCount),
+                    pluralStringResource(R.plurals.checker_summary, result.ruleCount, result.ruleCount),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

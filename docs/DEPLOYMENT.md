@@ -7,7 +7,8 @@ This document describes deployment preparation. No remote Supabase project, Play
 - Node.js 22+ and npm
 - JDK 17+ (JDK 21 verified locally)
 - Android SDK platform 36 and build-tools 36.x
-- Supabase CLI and Docker for the full local stack (not installed here)
+- Docker engine and Supabase CLI for the full local stack (full runtime verification is still pending)
+- Deno 2.x for Edge Function typechecking and tests
 - PostgreSQL client tools for the Docker-free test runner
 - An authorized Supabase project for remote deployment
 
@@ -45,7 +46,20 @@ npm.cmd test
 npm.cmd run build
 ```
 
-Deploy the `dist` directory to a static host. Configure SPA fallback to `index.html`. Set a restrictive `ADMIN_ORIGIN` function secret so CORS is not `*`. The console holds only the public anon/publishable key; database RLS and admin RPC checks are authoritative.
+Deploy the `dist` directory to a static host. Configure SPA fallback to `index.html` for `/privacy`, `/delete-account`, and all admin routes. Set `VITE_DATA_CONTROLLER` and `VITE_SUPPORT_EMAIL` before publishing; these values are rendered on the public privacy page. The console holds only the public anon/publishable key; database RLS and admin RPC checks are authoritative.
+
+The public web surfaces are:
+
+- `/privacy` — deployment-specific privacy policy.
+- `/delete-account` — self-service account-deletion request and cancellation. It is not an authenticated admin route.
+
+Both require the same public Supabase URL and anon key as the console. Do not deploy the privacy page with empty controller/support placeholders, and do not put a service-role key in the browser bundle.
+
+`ADMIN_ORIGIN` is a comma-separated list of exact browser origins allowed to call the Edge Functions. The default is local-only (`http://localhost:5173` and `http://127.0.0.1:5173`). A wildcard is ignored, not honored. Set it to the deployed admin origin before using CSV tools:
+
+```bash
+supabase secrets set ADMIN_ORIGIN=https://admin.example.com
+```
 
 ## Edge Functions
 
@@ -55,6 +69,15 @@ In an authorized environment with Supabase CLI and Deno:
 supabase functions deploy admin-csv
 supabase functions deploy purge-pending-accounts --no-verify-jwt
 ```
+
+Local typecheck and tests do not need a Supabase project:
+
+```powershell
+deno check supabase/functions/_shared/auth.ts supabase/functions/admin-csv/index.ts supabase/functions/admin-csv/handler.ts supabase/functions/purge-pending-accounts/index.ts supabase/functions/purge-pending-accounts/handler.ts supabase/functions/tests/auth_test.ts supabase/functions/tests/admin_csv_test.ts supabase/functions/tests/purge_test.ts
+deno test --allow-env supabase/functions/tests
+```
+
+These cover handler behavior, CORS/origin rejection, auth failure mapping, CSV limits and formula neutralization, purge secrets, and bounded service-role invocations. They do not replace a live-stack test with a real admin JWT and database.
 
 Configure secrets:
 
@@ -97,8 +120,7 @@ Build and test:
 ```powershell
 cd apps/android
 $env:JAVA_HOME='C:\Program Files\Java\jdk-21.0.12'
-$env:GRADLE_USER_HOME='D:\DEV\build-cache\gradle-home'
-.\gradlew.bat :app:assembleDebug :app:testDebugUnitTest
+.\gradlew.bat :app:assembleDebug :app:testDebugUnitTest :app:assembleDebugAndroidTest
 ```
 
 Release builds require signing values and fail fast without them. See `docs/PLAY_STORE_RELEASE.md`.
@@ -128,4 +150,4 @@ Release builds require signing values and fail fast without them. See `docs/PLAY
 
 ## Known environment limitations
 
-Docker, Supabase CLI, and Deno are absent from the current machine, so the full Supabase runtime and Edge Functions are unverified. CI must add those jobs or use a controlled environment with PostgreSQL and the SQL shim for the database suite.
+Docker, the Supabase CLI, and Deno are available in this workspace, but the full Supabase runtime has not been brought up or exercised here. Edge Function typechecking and 24 handler tests pass, and instrumented Compose tests are compiled but have not run without a usable emulator/device. Do not treat those results as a live-stack or release validation.

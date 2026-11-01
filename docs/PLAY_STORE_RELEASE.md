@@ -25,7 +25,6 @@ RELEASE_KEY_PASSWORD=...
 ```powershell
 cd apps/android
 $env:JAVA_HOME='C:\Program Files\Java\jdk-21.0.12'
-$env:GRADLE_USER_HOME='D:\DEV\build-cache\gradle-home'
 .\gradlew.bat clean :app:bundleRelease
 ```
 
@@ -53,8 +52,8 @@ Prepare accurate declarations; do not copy generic claims:
 - **News/app status:** not a news app.
 - **Government app:** no.
 - **Financial features:** none.
-- **Privacy policy:** required; must cover Supabase auth, contributions, moderation, reports, deletion, and retention. No public URL is configured in this repository.
-- **Account deletion:** the app provides a request path; Play requires a web deletion path when account creation is offered. Do not declare completion until that URL exists.
+- **Privacy policy:** required. The admin web app now ships `/privacy` and `/delete-account`, but no deployment URL is configured. Before publishing, set `VITE_DATA_CONTROLLER` and `VITE_SUPPORT_EMAIL`, deploy the site, and use the resulting HTTPS `/privacy` URL. The policy covers Supabase auth, contributions, moderation, reports, deletion, and retention. Do not invent a controller or support address.
+- **Account deletion:** the Android app provides an in-app request/cancel path, and the admin web app provides a public `/delete-account` route. Play also requires an externally reachable web deletion URL. Both routes require the deployed admin URL, public Supabase configuration, and `ADMIN_ORIGIN` coverage. Do not declare completion until that URL exists and is tested.
 
 ## Store listing assets
 
@@ -74,7 +73,7 @@ Avoid implying certification, complete coverage, or guaranteed repair outcomes. 
 
 1. Freeze schema and run the full SQL suite.
 2. Deploy and verify backend/migrations in an authorized staging project.
-3. Deploy admin console; restrict CORS.
+3. Deploy admin console, including `/privacy` and `/delete-account`; configure controller/support values and restrict CORS.
 4. Deploy Edge Functions; verify secrets and scheduler.
 5. Build signed AAB with production config.
 6. Internal testing track with seed-free production data.

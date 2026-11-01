@@ -1,11 +1,41 @@
 import { createClient, type SupabaseClient, type User } from 'npm:@supabase/supabase-js@2.57.4';
 
-export const corsHeaders = {
-  'Access-Control-Allow-Origin': Deno.env.get('ADMIN_ORIGIN') ?? '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-cron-secret',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Vary': 'Origin',
-};
+const LOCAL_ADMIN_ORIGINS = ['http://localhost:5173', 'http://127.0.0.1:5173'];
+
+/**
+ * ADMIN_ORIGIN is a comma-separated list of exact browser origins allowed to
+ * call the functions. It is required for a deployment; local development has a
+ * deliberately narrow localhost-only fallback. A wildcard is never honored.
+ */
+export function allowedAdminOrigins(): string[] {
+  const configured = (Deno.env.get('ADMIN_ORIGIN') ?? '')
+    .split(',')
+    .map((origin) => origin.trim().replace(/\/$/, ''))
+    .filter((origin) => origin.length > 0 && origin !== '*');
+  return configured.length > 0 ? configured : LOCAL_ADMIN_ORIGINS;
+}
+
+export function isAdminOriginAllowed(origin: string): boolean {
+  return allowedAdminOrigins().includes(origin);
+}
+
+/**
+ * Build response headers for one request. A browser origin is reflected only
+ * when it is explicitly allowed; otherwise the configured primary origin is
+ * returned so the browser rejects the response.
+ */
+export function corsHeaders(request?: Request): Record<string, string> {
+  const origins = allowedAdminOrigins();
+  const origin = request?.headers.get('Origin');
+  const allowedOrigin = origin && origins.includes(origin) ? origin : origins[0];
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-cron-secret',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Max-Age': '600',
+    'Vary': 'Origin',
+  };
+}
 
 export class HttpError extends Error {
   constructor(
@@ -16,19 +46,36 @@ export class HttpError extends Error {
   }
 }
 
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
-const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
+function supabaseUrl(): string | undefined {
+  return Deno.env.get('SUPABASE_URL')?.trim() || undefined;
+}
 
-export function json(body: unknown, status = 200): Response {
+function anonKey(): string | undefined {
+  return Deno.env.get('SUPABASE_ANON_KEY')?.trim() || undefined;
+}
+
+export function json(body: unknown, status = 200, request?: Request): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json; charset=utf-8' },
+    headers: { ...corsHeaders(request), 'Content-Type': 'application/json; charset=utf-8' },
   });
 }
 
 export function handleOptions(request: Request): Response | null {
-  if (request.method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers: corsHeaders });
+  if (request.method !== 'OPTIONS') return null;
+  const origin = request.headers.get('Origin');
+  const allowed = !origin || isAdminOriginAllowed(origin);
+  return new Response(null, {
+    status: allowed ? 204 : 403,
+    headers: corsHeaders(request),
+  });
+}
+
+/** Reject browser requests from origins outside ADMIN_ORIGIN. */
+export function rejectDisallowedOrigin(request: Request): Response | null {
+  const origin = request.headers.get('Origin');
+  if (origin && !isAdminOriginAllowed(origin)) {
+    return json({ error: 'Origin not allowed' }, 403, request);
   }
   return null;
 }
@@ -44,14 +91,16 @@ export function requirePost(request: Request): void {
  * worker never uses the service role for user-initiated reads or writes.
  */
 export function userClient(request: Request): SupabaseClient {
-  if (!SUPABASE_URL || !ANON_KEY) {
+  const url = supabaseUrl();
+  const key = anonKey();
+  if (!url || !key) {
     throw new HttpError(503, 'Function environment is incomplete');
   }
   const authorization = request.headers.get('Authorization');
   if (!authorization?.startsWith('Bearer ')) {
     throw new HttpError(401, 'A user access token is required');
   }
-  return createClient(SUPABASE_URL, ANON_KEY, {
+  return createClient(url, key, {
     global: { headers: { Authorization: authorization } },
     auth: { persistSession: false, autoRefreshToken: false },
   });
@@ -81,12 +130,12 @@ export async function requireAdmin(request: Request): Promise<AdminContext> {
   return { client, user: data.user, role };
 }
 
-export function errorResponse(error: unknown): Response {
+export function errorResponse(error: unknown, request?: Request): Response {
   if (error instanceof HttpError) {
-    return json({ error: error.message }, error.status);
+    return json({ error: error.message }, error.status, request);
   }
   console.error('Unhandled function error', error);
-  return json({ error: 'Internal server error' }, 500);
+  return json({ error: 'Internal server error' }, 500, request);
 }
 
 export function csvCell(value: unknown): string {

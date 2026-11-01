@@ -834,6 +834,84 @@ textarea:hover {
   padding: 0 0 1rem;
 }
 
+/* Public legal and account-deletion pages */
+.public-page {
+  min-height: 100vh;
+  padding: 2rem 1.25rem;
+  background:
+    radial-gradient(circle at 12% 0%, color-mix(in srgb, var(--primary) 10%, transparent), transparent 38%),
+    var(--bg);
+}
+
+.public-document {
+  width: min(760px, 100%);
+  margin: 0 auto;
+  padding: clamp(1.25rem, 4vw, 2.5rem);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  line-height: 1.65;
+}
+
+.public-document h1 {
+  margin: 0.2rem 0 0.5rem;
+  font-size: clamp(1.7rem, 4vw, 2.25rem);
+  line-height: 1.2;
+}
+
+.public-document h2 {
+  margin: 1.8rem 0 0.55rem;
+  font-size: 1.1rem;
+}
+
+.public-document p,
+.public-document ul {
+  margin: 0 0 0.9rem;
+}
+
+.public-document ul {
+  padding-left: 1.25rem;
+}
+
+.public-document li {
+  margin-bottom: 0.45rem;
+}
+
+.public-document code {
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  background: var(--surface-muted);
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+}
+
+.public-document .row-actions {
+  margin: 1rem 0;
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--primary);
+  font-size: 0.78rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 520px) {
+  .public-page {
+    padding: 0;
+  }
+
+  .public-document {
+    min-height: 100vh;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
+
 /* Modals */
 .modal-backdrop {
   display: grid;

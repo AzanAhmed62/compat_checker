@@ -4,15 +4,15 @@ Compat Checker is an evidence-backed hardware compatibility platform for repair 
 
 The repository contains three surfaces:
 
-- **Android app** — Kotlin, Jetpack Compose, Material 3, MVVM/UDF, Room offline cache, DataStore settings, English/Urdu with RTL, deep links.
-- **Admin console** — React 19, TypeScript, Vite, TanStack Query, Supabase JS.
-- **Backend** — Supabase/PostgreSQL ordered migrations, RLS, explicit public views, server-side compatibility evaluation, tests, and Edge Functions.
+- **Android app** - Kotlin, Jetpack Compose, Material 3, MVVM/UDF, Room offline cache, DataStore settings, English/Urdu with RTL, deep links.
+- **Admin console** - React 19, TypeScript, Vite, TanStack Query, Supabase JS, plus public privacy and account-deletion routes.
+- **Backend** - Supabase/PostgreSQL ordered migrations, RLS, explicit public views, server-side compatibility evaluation, tests, and Edge Functions.
 
 ## Repository layout
 
 ```text
 apps/android       Native Android app
-apps/admin_panel   Admin web console
+apps/admin_panel   Admin web console and public legal/deletion pages
 supabase           Migrations, seed, SQL tests, Edge Functions, config
 scripts            Docker-free PostgreSQL test runners
 docs               Product, architecture, security, test, and release docs
@@ -66,6 +66,15 @@ npm.cmd run build
 
 Use `npm.cmd` on this Windows machine. The console uses only `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`; authorization is enforced by RLS and admin RPCs.
 
+Public routes:
+
+- `/privacy` - deployment-specific privacy policy.
+- `/delete-account` - signed-in account-deletion request and cancellation.
+
+Set `VITE_DATA_CONTROLLER` and `VITE_SUPPORT_EMAIL` before publishing these pages. Do not deploy empty controller/support placeholders. The static host must rewrite SPA routes to `index.html`.
+
+Edge Function CORS uses exact `ADMIN_ORIGIN` values. Wildcards are ignored; local development falls back to `http://localhost:5173` and `http://127.0.0.1:5173`.
+
 ## Android app
 
 Add untracked `apps/android/local.properties` (Android Studio normally adds
@@ -82,11 +91,18 @@ Local HTTP is accepted only in debug builds for emulator/local hosts. A key pref
 ```powershell
 cd apps/android
 $env:JAVA_HOME='C:\Program Files\Java\jdk-21.0.12'
-.\gradlew.bat :app:assembleDebug :app:testDebugUnitTest
+.\gradlew.bat :app:assembleDebug :app:testDebugUnitTest :app:assembleDebugAndroidTest
 ```
 
 Set `GRADLE_USER_HOME` to a cache on a drive with free space if the default Gradle
 home is constrained. The SDK platform and build tools for API 36 must be installed.
+Close Android Studio before CLI builds on a low-memory machine.
+
+Run instrumentation tests on a booted emulator/device:
+
+```powershell
+.\gradlew.bat :app:connectedDebugAndroidTest
+```
 
 Deep links:
 
@@ -97,12 +113,13 @@ Deep links:
 
 ## Verification status
 
-Observed in this workspace:
+Observed in this workspace on 2026-10-24:
 
-- Database: 6 SQL/RLS test files passed with the Docker-free PostgreSQL runner.
-- Admin: TypeScript typecheck passed, 12 Vitest tests passed in 2 files, production build passed.
-- Android: `:app:assembleDebug` and `:app:testDebugUnitTest` passed; **7 JVM tests in 3 test classes** passed with no failures. The debug APK is 24.48 MiB at `apps/android/app/build/outputs/apk/debug/app-debug.apk`. No device, emulator, or live backend runtime has been exercised, so this is not a release validation.
-- Edge Functions: source exists; Deno and Supabase CLI are unavailable, so they have not been executed.
+- Database: 6 SQL/RLS test files passed with the Docker-free PostgreSQL runner after all 11 migrations and seed.
+- Admin: TypeScript build/typecheck passed; 12 Vitest tests passed in 2 files; production build transformed 181 modules (252.90 kB JS, 80.74 kB gzip; 16.84 kB CSS). Public pages have no live-backend UI test.
+- Android: `:app:assembleDebug` passed; **7 JVM tests in 3 test classes** passed with no failures. The debug APK is 25,664,550 bytes (24.48 MiB), signed with the Android Debug certificate; SHA-256 is `87426311575EC8BC78A0F3F699173DCE52FF8D2A6CA8840AE6456150C9499F27`. The checker Compose instrumentation suite compiles; it has not run on a device/emulator. No live backend runtime has been exercised, so this is not a release validation.
+- Edge Functions: Deno typecheck passed; **24 handler tests passed**. No hosted function, real admin JWT/database RPC, or scheduler invocation has been tested.
+- CI has database, admin, Edge Function, and Android jobs. It has not run on GitHub Actions.
 - No remote Supabase project, Play signing key, or Play Console access has been used.
 
 See [`docs/KNOWN_ISSUES.md`](docs/KNOWN_ISSUES.md) for blockers.
