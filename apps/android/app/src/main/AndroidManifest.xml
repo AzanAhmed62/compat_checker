@@ -54,6 +54,20 @@
         <category android:name="android.intent.category.BROWSABLE" />
         <data android:scheme="compatchecker" android:host="rule" />
       </intent-filter>
+
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+        <data android:scheme="compatchecker" android:host="collection" />
+      </intent-filter>
+
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+        <data android:scheme="compatchecker" android:host="profile" />
+      </intent-filter>
     </activity>
 
     <service

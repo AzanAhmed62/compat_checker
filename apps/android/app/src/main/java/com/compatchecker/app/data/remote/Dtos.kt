@@ -12,6 +12,7 @@ data class ProductSummaryDto(
     @SerialName("model_number") val modelNumber: String? = null,
     val summary: String? = null,
     @SerialName("brand_name") val brandName: String = "",
+    @SerialName("brand_slug") val brandSlug: String = "",
     @SerialName("category_name") val categoryName: String = "",
     @SerialName("category_slug") val categorySlug: String = "",
     @SerialName("image_path") val imagePath: String? = null,
@@ -120,7 +121,7 @@ data class CheckedRuleDto(
     val relationship: String,
     val verification: String,
     val confidence: Int = 0,
-    @SerialName("risk") val riskLevel: String? = null,
+    @SerialName("risk_level") val riskLevel: String? = null,
     val summary: String? = null,
     @SerialName("technical_details") val technicalDetails: String? = null,
     @SerialName("required_modifications") val requiredModifications: String? = null,
@@ -319,6 +320,99 @@ data class NotificationDto(
 data class NotificationsDto(
     val items: List<NotificationDto> = emptyList(),
     val total: Int = 0,
+)
+
+@Serializable
+data class CollectionDto(
+    val id: String,
+    val title: String,
+    val description: String? = null,
+    @SerialName("is_public") val isPublic: Boolean = false,
+    @SerialName("item_count") val itemCount: Int = 0,
+    @SerialName("created_at") val createdAt: String? = null,
+    @SerialName("updated_at") val updatedAt: String? = null,
+)
+
+@Serializable
+data class CollectionsDto(val items: List<CollectionDto> = emptyList())
+
+@Serializable
+data class CollectionItemDto(
+    @SerialName("product_id") val productId: String,
+    @SerialName("product_name") val productName: String,
+    @SerialName("product_slug") val productSlug: String = "",
+    @SerialName("model_number") val modelNumber: String? = null,
+    val summary: String? = null,
+    @SerialName("brand_name") val brandName: String = "",
+    @SerialName("brand_slug") val brandSlug: String = "",
+    @SerialName("category_name") val categoryName: String = "",
+    @SerialName("category_slug") val categorySlug: String = "",
+    @SerialName("image_path") val imagePath: String? = null,
+    val note: String? = null,
+    @SerialName("added_at") val addedAt: String? = null,
+)
+
+@Serializable
+data class CollectionDetailDto(
+    val id: String,
+    val title: String,
+    val description: String? = null,
+    @SerialName("is_public") val isPublic: Boolean = false,
+    @SerialName("is_owner") val isOwner: Boolean = false,
+    @SerialName("owner_username") val ownerUsername: String = "",
+    @SerialName("owner_display_name") val ownerDisplayName: String = "",
+    @SerialName("created_at") val createdAt: String? = null,
+    @SerialName("updated_at") val updatedAt: String? = null,
+    val items: List<CollectionItemDto> = emptyList(),
+)
+
+@Serializable
+data class RecentContributionDto(
+    val kind: String,
+    val status: String,
+    @SerialName("reviewed_at") val reviewedAt: String? = null,
+)
+
+@Serializable
+data class PublicProfileDto(
+    val id: String,
+    val username: String,
+    @SerialName("display_name") val displayName: String,
+    val bio: String? = null,
+    @SerialName("avatar_url") val avatarUrl: String? = null,
+    val role: String = "member",
+    @SerialName("created_at") val createdAt: String? = null,
+    @SerialName("reputation_points") val reputationPoints: Int = 0,
+    @SerialName("reputation_tier") val reputationTier: String = "visitor",
+    @SerialName("approved_contributions") val approvedContributions: Int = 0,
+    @SerialName("published_rules") val publishedRules: Int = 0,
+    val followers: Int = 0,
+    val following: Int = 0,
+    @SerialName("is_following") val isFollowing: Boolean = false,
+    @SerialName("is_self") val isSelf: Boolean = false,
+    @SerialName("recent_contributions") val recentContributions: List<RecentContributionDto> = emptyList(),
+)
+
+@Serializable
+data class LeaderboardEntryDto(
+    val id: String,
+    val username: String,
+    @SerialName("display_name") val displayName: String,
+    @SerialName("avatar_url") val avatarUrl: String? = null,
+    val role: String = "member",
+    @SerialName("reputation_points") val reputationPoints: Int = 0,
+    @SerialName("reputation_tier") val reputationTier: String = "visitor",
+    @SerialName("approved_contributions") val approvedContributions: Int = 0,
+)
+
+@Serializable
+data class LeaderboardDto(val items: List<LeaderboardEntryDto> = emptyList())
+
+@Serializable
+data class FollowResultDto(
+    @SerialName("user_id") val userId: String,
+    val following: Boolean,
+    val followers: Int = 0,
 )
 
 @Serializable

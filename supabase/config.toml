@@ -1,20 +1,23 @@
 project_id = "compat-checker"
 
+# Compat Checker uses an independent local stack. These ports deliberately do
+# not overlap the default Supabase ports (54321-54329) used by other projects
+# on the same workstation, including GB Rides.
 [api]
 enabled = true
-port = 54321
+port = 55321
 schemas = ["public"]
 extra_search_path = ["public", "extensions"]
 max_rows = 1000
 
 [db]
-port = 54322
-shadow_port = 54320
+port = 55322
+shadow_port = 55320
 major_version = 17
 
 [db.pooler]
 enabled = false
-port = 54329
+port = 55329
 pool_mode = "transaction"
 
 [db.migrations]
@@ -27,18 +30,23 @@ sql_paths = ["./seed.sql"]
 [realtime]
 enabled = false
 
+# Studio is disabled by default to keep the local stack within the memory
+# budget of the development machine. Enable it only when needed.
 [studio]
-enabled = true
-port = 54323
+enabled = false
+port = 55323
 api_url = "http://127.0.0.1"
 
-[inbucket]
+[local_smtp]
 enabled = true
-port = 54324
+port = 55324
 
 [storage]
 enabled = true
 file_size_limit = "20MiB"
+
+[storage.vector]
+enabled = false
 
 [auth]
 enabled = true

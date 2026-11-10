@@ -34,6 +34,11 @@
   <string name="action_view_all">View all</string>
   <string name="action_report">Report</string>
   <string name="action_new_request">New request</string>
+  <string name="action_create">Create</string>
+  <string name="action_close">Close</string>
+  <string name="action_delete">Delete</string>
+  <string name="action_follow">Follow</string>
+  <string name="action_unfollow">Unfollow</string>
 
   <string name="state_loading">Loading…</string>
   <string name="state_no_results">No results found</string>
@@ -48,6 +53,8 @@
 
   <string name="search_hint">Search name, model, or alias</string>
   <string name="all_categories">All categories</string>
+  <string name="all_brands">All brands</string>
+  <string name="action_refresh">Refresh</string>
   <string name="products_count">%1$d products</string>
   <string name="comments_count">%1$d comments</string>
   <string name="load_more">Load more</string>
@@ -58,6 +65,7 @@
   <string name="section_specifications">Specifications</string>
   <string name="section_aliases">Also known as</string>
   <string name="section_compatibility">Compatibility</string>
+  <string name="section_products">Products</string>
   <string name="section_guides">Guides</string>
   <string name="section_comments">Discussion</string>
   <string name="section_evidence">Evidence</string>
@@ -149,7 +157,9 @@
   <string name="profile_role">Role: %1$s</string>
   <string name="profile_status">Account: %1$s</string>
   <string name="profile_favorites">Favorites</string>
+  <string name="profile_collections">Collections</string>
   <string name="profile_contributions">Contributions</string>
+  <string name="profile_leaderboard">Community leaderboard</string>
   <string name="profile_notifications">Notifications</string>
   <string name="profile_settings">Settings</string>
   <string name="profile_points">%1$d points · %2$s</string>
@@ -178,6 +188,60 @@
   <string name="notifications_title">Notifications</string>
   <string name="notifications_empty">No notifications yet.</string>
   <string name="notification_unread">Unread</string>
+  <string name="notification_link_unavailable">This notification link is not supported by this app version.</string>
+
+  <string name="collections_title">Collections</string>
+  <string name="collections_subtitle">Group products into public or private collections. Private collections stay visible only to you.</string>
+  <string name="collections_empty">No collections yet. Create one to organize products.</string>
+  <string name="collection_new">New collection</string>
+  <string name="collection_title">Collection</string>
+  <string name="collection_create_title">Create collection</string>
+  <string name="collection_title_label">Title</string>
+  <string name="collection_description_label">Description (optional)</string>
+  <string name="collection_public_label">Public collection</string>
+  <string name="collection_public_help">Public collections can be viewed by anyone. Private collections are visible only to you.</string>
+  <string name="collection_private">Private</string>
+  <string name="collection_public">Public</string>
+  <plurals name="collection_items">
+    <item quantity="one">%1$d item</item>
+    <item quantity="other">%1$d items</item>
+  </plurals>
+  <string name="collection_updated">updated %1$s</string>
+  <string name="collection_owner">by %1$s</string>
+  <string name="collection_added_on">Added %1$s</string>
+  <string name="collection_empty_items">This collection has no published products yet.</string>
+  <string name="collection_not_found">Collection not found or not visible.</string>
+  <string name="collection_make_public">Make this collection public</string>
+  <string name="collection_make_private">Make this collection private</string>
+  <string name="collection_remove_item">Remove from collection</string>
+  <string name="collection_item_removed">Removed from collection</string>
+  <string name="collection_delete_title">Delete collection</string>
+  <string name="collection_delete_body">Delete this collection? The products themselves are not removed.</string>
+  <string name="collection_deleted">Collection deleted</string>
+  <string name="add_to_collection_title">Add to collection</string>
+  <string name="add_to_collection_choose">Choose a collection</string>
+  <string name="add_to_collection_empty">You have no collections yet. Create one below.</string>
+  <string name="add_to_collection_new">New collection title</string>
+  <string name="add_to_collection_create">Create and add</string>
+  <string name="add_to_collection_manage">Manage collections</string>
+  <string name="add_to_collection_added">Added to collection</string>
+
+  <string name="public_profile_title">Member profile</string>
+  <string name="profile_not_found">Profile not found.</string>
+  <string name="profile_followers">Followers</string>
+  <string name="profile_following">Following</string>
+  <string name="profile_approved_contributions">Approved</string>
+  <string name="profile_published_rules">%1$d published rules</string>
+  <string name="profile_recent_contributions">Recent approved contributions</string>
+  <string name="profile_no_recent_contributions">No approved contributions yet.</string>
+  <string name="profile_self">This is your public profile.</string>
+  <string name="profile_follow_sign_in">Sign in to follow</string>
+
+  <string name="leaderboard_title">Community leaderboard</string>
+  <string name="leaderboard_subtitle">Reputation comes only from approved contributions and published rules.</string>
+  <string name="leaderboard_empty">No ranked contributors yet.</string>
+  <string name="leaderboard_rank">#%1$d</string>
+  <string name="leaderboard_stats">%1$d points · %2$d approved</string>
 
   <string name="settings_title">Settings</string>
   <string name="settings_appearance">Appearance</string>

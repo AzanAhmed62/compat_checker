@@ -8,7 +8,7 @@ Maintain Compat Checker as an evidence-backed compatibility platform. Never inve
 
 1. Read `docs/REPOSITORY_AUDIT.md`, `docs/PRODUCT_SPEC.md`, `docs/ARCHITECTURE.md`, and `NEXT_TASK.md`.
 2. Inspect `git status` and the current diff before editing. The original demo is preserved at baseline commit `ac78fbc`.
-3. Use `scripts/db_test.ps1` for SQL verification. Docker and Supabase CLI are not available here.
+3. Use `scripts/db_test.sh` on Linux/macOS or `scripts/db_test.ps1` on Windows for SQL verification. Docker and the Supabase CLI are available on the current Linux workspace, and the pinned local stack has been started with the isolated ports in `supabase/config.toml`.
 4. Do not connect to, reset, or mutate any remote Supabase project without explicit owner authorization.
 
 ## Non-negotiables
@@ -22,36 +22,42 @@ Maintain Compat Checker as an evidence-backed compatibility platform. Never inve
 - Do not run `seed.sql` in production.
 - Do not modify applied migrations. Add a new ordered migration and tests.
 - Do not delete rule evidence; retire/rollback instead.
-- Use `npm.cmd` on this Windows machine.
+- Use `npm` on Linux/macOS and `npm.cmd` on Windows.
 - Run tests and report exact observed results. If something cannot run, say so.
 
 ## Verification commands
 
 Database:
 
+Linux/macOS:
+```bash
+PGPASSWORD=postgres PGUSER=supabase_admin PGPORT=55432 ./scripts/db_test.sh --keep
+```
+
+Windows:
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/db_test.ps1 -Keep
 ```
 
 Admin:
 
-```powershell
+```bash
 cd apps/admin_panel
-npm.cmd run typecheck
-npm.cmd test
-npm.cmd run build
+npm run typecheck
+npm test
+npm run build
 ```
 
 Android:
 
-```powershell
+```bash
 cd apps/android
-$env:JAVA_HOME='C:\Program Files\Java\jdk-21.0.12'
-$env:GRADLE_USER_HOME='D:\DEV\build-cache\gradle-home'
-$env:TEMP='D:\DEV\build-cache\temp'
-$env:TMP='D:\DEV\build-cache\temp'
-.\gradlew.bat :app:assembleDebug :app:testDebugUnitTest
+JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 \
+  ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:assembleDebugAndroidTest
 ```
+
+On Windows, set `JAVA_HOME`/`GRADLE_USER_HOME`/`TEMP`/`TMP` for the local caches
+and run `.\gradlew.bat` with the same tasks.
 
 ## Style
 

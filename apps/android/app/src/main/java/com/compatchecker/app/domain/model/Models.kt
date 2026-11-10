@@ -6,6 +6,7 @@ data class ProductSummary(
     val name: String,
     val modelNumber: String?,
     val brandName: String,
+    val brandSlug: String,
     val categoryName: String,
     val categorySlug: String,
     val summary: String?,
@@ -38,6 +39,7 @@ data class ProductDetail(
     val guides: List<GuideLink>,
     val commentCount: Int,
     val isFavorite: Boolean,
+    val offline: Boolean = false,
 )
 
 data class ProductRule(
@@ -135,7 +137,14 @@ data class GuideSummary(
 
 data class GuideStep(val id: String, val position: Int, val title: String, val body: String, val imageUrl: String?)
 
-data class GuideDetail(val guide: GuideSummary, val steps: List<GuideStep>, val commentCount: Int)
+data class GuideDetail(
+    val guide: GuideSummary,
+    val steps: List<GuideStep>,
+    val commentCount: Int,
+    val offline: Boolean = false,
+)
+
+data class GuideFeed(val guides: List<GuideSummary>, val offline: Boolean = false)
 
 data class Category(val id: String, val slug: String, val name: String)
 
@@ -191,3 +200,73 @@ data class AppNotification(val id: String, val type: String, val title: String, 
 data class SearchPage(val items: List<ProductSummary>, val total: Int, val offline: Boolean = false)
 
 data class AuthSession(val userId: String, val email: String?)
+
+data class CollectionSummary(
+    val id: String,
+    val title: String,
+    val description: String?,
+    val isPublic: Boolean,
+    val itemCount: Int,
+    val createdAt: String?,
+    val updatedAt: String?,
+)
+
+data class CollectionItem(
+    val productId: String,
+    val productName: String,
+    val productSlug: String,
+    val modelNumber: String?,
+    val summary: String?,
+    val brandName: String,
+    val brandSlug: String,
+    val categoryName: String,
+    val categorySlug: String,
+    val imageUrl: String?,
+    val note: String?,
+    val addedAt: String?,
+)
+
+data class CollectionDetail(
+    val id: String,
+    val title: String,
+    val description: String?,
+    val isPublic: Boolean,
+    val isOwner: Boolean,
+    val ownerUsername: String,
+    val ownerDisplayName: String,
+    val items: List<CollectionItem>,
+)
+
+data class RecentContribution(val kind: String, val status: String, val reviewedAt: String?)
+
+data class PublicProfile(
+    val id: String,
+    val username: String,
+    val displayName: String,
+    val bio: String?,
+    val avatarUrl: String?,
+    val role: String,
+    val createdAt: String?,
+    val reputationPoints: Int,
+    val reputationTier: String,
+    val approvedContributions: Int,
+    val publishedRules: Int,
+    val followers: Int,
+    val following: Int,
+    val isFollowing: Boolean,
+    val isSelf: Boolean,
+    val recentContributions: List<RecentContribution>,
+)
+
+data class LeaderboardEntry(
+    val id: String,
+    val username: String,
+    val displayName: String,
+    val avatarUrl: String?,
+    val role: String,
+    val reputationPoints: Int,
+    val reputationTier: String,
+    val approvedContributions: Int,
+)
+
+data class FollowResult(val userId: String, val following: Boolean, val followers: Int)

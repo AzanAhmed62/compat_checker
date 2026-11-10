@@ -22,6 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -39,6 +40,7 @@ import com.compatchecker.app.ui.components.LoadingPane
 import com.compatchecker.app.ui.components.ProductCard
 import com.compatchecker.app.ui.formatDate
 import com.compatchecker.app.ui.statusLabel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -151,11 +153,15 @@ private fun ContributionCard(contribution: Contribution) {
 fun NotificationsScreen(
     profiles: ProfileRepository,
     onBack: () -> Unit,
-    onOpenNotification: (AppNotification) -> Unit,
+    onOpenNotification: (AppNotification) -> Boolean,
 ) {
     val viewModel: NotificationsViewModel = compatViewModel { NotificationsViewModel(profiles) }
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val snackbar = remember { androidx.compose.material3.SnackbarHostState() }
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    val unavailable = stringResource(R.string.notification_link_unavailable)
     Scaffold(
+        snackbarHost = { androidx.compose.material3.SnackbarHost(snackbar) },
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.notifications_title)) },
@@ -183,7 +189,9 @@ fun NotificationsScreen(
                     Card(
                         modifier = Modifier.fillMaxWidth().clickable {
                             viewModel.markRead(notification)
-                            onOpenNotification(notification)
+                            if (!onOpenNotification(notification)) {
+                                scope.launch { snackbar.showSnackbar(unavailable) }
+                            }
                         },
                     ) {
                         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {

@@ -58,8 +58,11 @@ function withCount<T>(
   return { items: data ?? [], total: count ?? 0, limit, offset };
 }
 
-function safeSearch(value: string): string {
-  return value.replace(/[,%()]/g, ' ').replace(/\s+/g, ' ').trim();
+export function sanitizeSearchTerm(value: string): string {
+  return value
+    .replace(/[,%()*\\]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 export async function fetchMe(): Promise<Me | null> {
@@ -117,7 +120,7 @@ export async function listProducts(options: {
     .range(offset, offset + limit - 1);
 
   if (options.status) query = query.eq('status', options.status);
-  const term = safeSearch(options.query ?? '');
+  const term = sanitizeSearchTerm(options.query ?? '');
   if (term) query = query.or(`name.ilike.%${term}%,slug.ilike.%${term}%`);
 
   const { data, error, count } = await query;
@@ -266,7 +269,7 @@ export async function listRules(options: {
     .range(offset, offset + limit - 1);
   if (options.status) query = query.eq('status', options.status);
   if (options.relationship) query = query.eq('relationship', options.relationship);
-  const term = safeSearch(options.query ?? '');
+  const term = sanitizeSearchTerm(options.query ?? '');
   if (term) query = query.ilike('summary', `%${term}%`);
 
   const { data, error, count } = await query;
@@ -579,7 +582,7 @@ export async function listRequests(options: {
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
   if (options.status) query = query.eq('status', options.status);
-  const term = safeSearch(options.query ?? '');
+  const term = sanitizeSearchTerm(options.query ?? '');
   if (term) query = query.ilike('title', `%${term}%`);
   const { data, error, count } = await query;
   if (error) fail(error);
@@ -640,7 +643,7 @@ export async function listComments(options: {
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
   if (options.status) query = query.eq('status', options.status);
-  const term = safeSearch(options.query ?? '');
+  const term = sanitizeSearchTerm(options.query ?? '');
   if (term) query = query.ilike('body', `%${term}%`);
   const { data, error, count } = await query;
   if (error) fail(error);
@@ -694,7 +697,7 @@ export async function listGuides(options: {
     .order('updated_at', { ascending: false })
     .range(offset, offset + limit - 1);
   if (options.status) query = query.eq('status', options.status);
-  const term = safeSearch(options.query ?? '');
+  const term = sanitizeSearchTerm(options.query ?? '');
   if (term) query = query.ilike('title', `%${term}%`);
   const { data, error, count } = await query;
   if (error) fail(error);
@@ -917,7 +920,7 @@ export async function listAudit(options: {
     .select('*', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
-  if (options.action) query = query.ilike('action', `%${safeSearch(options.action)}%`);
+  if (options.action) query = query.ilike('action', `%${sanitizeSearchTerm(options.action)}%`);
   if (options.entityType) query = query.eq('entity_type', options.entityType);
   const { data, error, count } = await query;
   if (error) fail(error);

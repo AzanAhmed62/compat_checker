@@ -91,6 +91,12 @@ jobs:
           distribution: temurin
           java-version: 21
       - uses: android-actions/setup-android@v3
+        with:
+          # setup-android@v3 defaults to "tools platform-tools"; the obsolete
+          # "tools" package no longer exists in current SDK repositories and
+          # makes the whole job fail during setup.
+          packages: "platform-tools"
+          accept-android-sdk-licenses: true
       - name: Install Android SDK platform and build tools
         run: |
           printf 'platforms;android-36\nbuild-tools;36.0.0\n' > "$RUNNER_TEMP/android-packages.txt"

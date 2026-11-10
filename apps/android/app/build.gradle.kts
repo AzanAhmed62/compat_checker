@@ -27,8 +27,8 @@ android {
     applicationId = "com.compatchecker.app"
     minSdk = 26
     targetSdk = 36
-    versionCode = 1
-    versionName = "1.0.0"
+    versionCode = 2
+    versionName = "1.1.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     vectorDrawables.useSupportLibrary = true
@@ -95,6 +95,8 @@ android {
       )
     }
   }
+
+  sourceSets.getByName("androidTest").assets.srcDir("$projectDir/schemas")
 }
 
 ksp {
@@ -136,6 +138,7 @@ dependencies {
   androidTestImplementation(libs.androidx.compose.ui.test.junit4)
   androidTestImplementation(libs.androidx.espresso.core)
   androidTestImplementation(libs.androidx.junit)
+  androidTestImplementation(libs.androidx.room.testing)
   androidTestImplementation(libs.androidx.test.core)
   androidTestImplementation(libs.androidx.test.runner)
   debugImplementation(libs.androidx.compose.ui.tooling)

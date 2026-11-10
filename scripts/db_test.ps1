@@ -4,7 +4,7 @@
   Rebuilds a disposable PostgreSQL database and runs the SQL/RLS test suite.
 
 .DESCRIPTION
-  This is the Docker-free path for validating the Supabase migrations. It
+  This is the plain-PostgreSQL path for validating the Supabase migrations. It
   creates a throwaway database, applies the plain-PostgreSQL Supabase shim, the
   ordered migrations, the deterministic seed, and every SQL test file.
 

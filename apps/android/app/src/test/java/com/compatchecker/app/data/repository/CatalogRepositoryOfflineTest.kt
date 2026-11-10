@@ -22,6 +22,7 @@ class CatalogRepositoryOfflineTest {
         id = id,
         name = name,
         brandName = brand,
+        brandSlug = brand.lowercase(),
         categoryName = categorySlug.replaceFirstChar { it.uppercase() },
         categorySlug = categorySlug,
         modelNumber = "AX1",
@@ -36,7 +37,7 @@ class CatalogRepositoryOfflineTest {
         val dao = FakeCatalogDao(listOf(cached(), cached(id = "p2", name = "Aurora X1 Battery")))
         val repository = CatalogRepositoryImpl(gateway = null, dao = dao)
 
-        val page = repository.search("aurora", null, limit = 20, offset = 0)
+        val page = repository.search("aurora", null, null, limit = 20, offset = 0)
 
         assertTrue(page.offline)
         assertEquals(2, page.total)
@@ -53,7 +54,7 @@ class CatalogRepositoryOfflineTest {
         )
         val repository = CatalogRepositoryImpl(gateway = null, dao = dao)
 
-        val page = repository.search("display", "displays", limit = 20, offset = 0)
+        val page = repository.search("display", "displays", null, limit = 20, offset = 0)
 
         assertEquals(1, page.items.size)
         assertEquals("p1", page.items.single().id)
@@ -65,7 +66,7 @@ class CatalogRepositoryOfflineTest {
         val repository = CatalogRepositoryImpl(gateway = null, dao = FakeCatalogDao(emptyList()))
 
         val failure = runCatching {
-            repository.search("anything", null, limit = 20, offset = 0)
+            repository.search("anything", null, null, limit = 20, offset = 0)
         }.exceptionOrNull()
 
         assertTrue(failure is OfflineCacheMissException)
@@ -79,10 +80,17 @@ class CatalogRepositoryOfflineTest {
         override suspend fun upsertDetail(detail: CachedDetailEntity) {
             details[detail.id] = detail
         }
+        override suspend fun upsertGuides(guides: List<com.compatchecker.app.data.local.CachedGuideEntity>) = Unit
+        override suspend fun upsertGuideDetail(detail: com.compatchecker.app.data.local.CachedGuideDetailEntity) = Unit
         override suspend fun allProducts(): List<CachedProductEntity> = products
         override suspend fun detail(id: String): CachedDetailEntity? = details[id]
+        override suspend fun allGuides(): List<com.compatchecker.app.data.local.CachedGuideEntity> = emptyList()
+        override suspend fun guide(id: String): com.compatchecker.app.data.local.CachedGuideEntity? = null
+        override suspend fun guideDetail(id: String): com.compatchecker.app.data.local.CachedGuideDetailEntity? = null
         override suspend fun deleteOldProducts(cutoff: Long) = Unit
         override suspend fun deleteOldDetails(cutoff: Long) = Unit
+        override suspend fun deleteOldGuides(cutoff: Long) = Unit
+        override suspend fun deleteOldGuideDetails(cutoff: Long) = Unit
     }
 }
 

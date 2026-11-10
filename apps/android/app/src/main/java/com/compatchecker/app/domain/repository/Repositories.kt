@@ -7,11 +7,17 @@ import com.compatchecker.app.domain.model.Category
 import com.compatchecker.app.domain.model.Comment
 import com.compatchecker.app.domain.model.CommunityRequest
 import com.compatchecker.app.domain.model.CompatibilityResult
+import com.compatchecker.app.domain.model.CollectionDetail
+import com.compatchecker.app.domain.model.CollectionSummary
 import com.compatchecker.app.domain.model.Contribution
+import com.compatchecker.app.domain.model.FollowResult
 import com.compatchecker.app.domain.model.GuideDetail
+import com.compatchecker.app.domain.model.GuideFeed
 import com.compatchecker.app.domain.model.GuideSummary
+import com.compatchecker.app.domain.model.LeaderboardEntry
 import com.compatchecker.app.domain.model.ProductDetail
 import com.compatchecker.app.domain.model.ProductSummary
+import com.compatchecker.app.domain.model.PublicProfile
 import com.compatchecker.app.domain.model.Reputation
 import com.compatchecker.app.domain.model.RuleDetail
 import com.compatchecker.app.domain.model.SearchPage
@@ -28,7 +34,13 @@ interface AuthRepository {
 }
 
 interface CatalogRepository {
-    suspend fun search(query: String, categorySlug: String?, limit: Int, offset: Int): SearchPage
+    suspend fun search(
+        query: String,
+        categorySlug: String?,
+        brandSlug: String?,
+        limit: Int,
+        offset: Int,
+    ): SearchPage
     suspend fun categories(): List<Category>
     suspend fun brands(): List<Brand>
     suspend fun product(id: String): ProductDetail
@@ -44,7 +56,7 @@ interface CompatibilityRepository {
 }
 
 interface GuideRepository {
-    suspend fun guides(): List<GuideSummary>
+    suspend fun guides(): GuideFeed
     suspend fun guide(id: String): GuideDetail
 }
 
@@ -55,6 +67,24 @@ interface CommunityRepository {
     suspend fun comments(targetType: String, targetId: String): List<Comment>
     suspend fun addComment(targetType: String, targetId: String, body: String): Comment
     suspend fun report(targetType: String, targetId: String, reason: String, details: String?)
+}
+
+interface SocialRepository {
+    suspend fun collections(): List<CollectionSummary>
+    suspend fun collection(id: String): CollectionDetail
+    suspend fun createCollection(title: String, description: String?, isPublic: Boolean): String
+    suspend fun updateCollection(
+        collectionId: String,
+        title: String?,
+        description: String?,
+        isPublic: Boolean?,
+    ): Boolean
+    suspend fun addToCollection(collectionId: String, productId: String, note: String?): Boolean
+    suspend fun removeFromCollection(collectionId: String, productId: String): Boolean
+    suspend fun deleteCollection(collectionId: String): Boolean
+    suspend fun publicProfile(userId: String): PublicProfile
+    suspend fun toggleFollow(userId: String): FollowResult
+    suspend fun leaderboard(): List<LeaderboardEntry>
 }
 
 interface ProfileRepository {

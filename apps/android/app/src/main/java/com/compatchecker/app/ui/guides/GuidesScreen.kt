@@ -27,6 +27,7 @@ import com.compatchecker.app.ui.compatViewModel
 import com.compatchecker.app.ui.components.EmptyPane
 import com.compatchecker.app.ui.components.ErrorPane
 import com.compatchecker.app.ui.components.LoadingPane
+import com.compatchecker.app.ui.components.OfflineBanner
 import com.compatchecker.app.ui.difficultyLabel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,6 +57,11 @@ fun GuidesScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                }
+                if (state.offline) {
+                    item {
+                        OfflineBanner()
+                    }
                 }
                 items(state.guides, key = { it.id }) { guide ->
                     GuideCard(guide, onClick = { onGuideClick(guide.id) })

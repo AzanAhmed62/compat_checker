@@ -46,12 +46,6 @@ fun verificationLabel(value: String): String = when (value) {
     else -> value.replace('_', ' ')
 }
 
-fun outcomeTitle(value: String): String = when (value) {
-    "compatible" -> "Compatible"
-    "incompatible" -> "Not compatible"
-    else -> "Unknown"
-}
-
 fun difficultyLabel(value: String): String =
     value.replaceFirstChar { it.uppercase() }
 

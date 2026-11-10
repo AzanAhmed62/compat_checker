@@ -14,6 +14,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Clear
+import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -52,7 +53,19 @@ fun CatalogScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.tab_browse)) }) },
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.tab_browse)) },
+                actions = {
+                    IconButton(onClick = viewModel::refresh, enabled = !state.loading) {
+                        Icon(
+                            Icons.Outlined.Refresh,
+                            contentDescription = stringResource(R.string.action_refresh),
+                        )
+                    }
+                },
+            )
+        },
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             OutlinedTextField(
@@ -89,6 +102,27 @@ fun CatalogScreen(
                         onClick = { viewModel.selectCategory(category.slug) },
                         label = { Text(category.name) },
                     )
+                }
+            }
+            if (state.brands.isNotEmpty()) {
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    item {
+                        FilterChip(
+                            selected = state.selectedBrand == null,
+                            onClick = { viewModel.selectBrand(null) },
+                            label = { Text(stringResource(R.string.all_brands)) },
+                        )
+                    }
+                    items(state.brands, key = { it.id }) { brand ->
+                        FilterChip(
+                            selected = state.selectedBrand == brand.slug,
+                            onClick = { viewModel.selectBrand(brand.slug) },
+                            label = { Text(brand.name) },
+                        )
+                    }
                 }
             }
             if (state.offline) OfflineBanner()

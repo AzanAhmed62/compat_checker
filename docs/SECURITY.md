@@ -30,6 +30,9 @@
 - Direct writes are denied except where an explicit admin policy exists. Member writes go through RPCs.
 - Roles, account status, verification, confidence, points, and moderation state are server-owned and never accepted from client-controlled profile updates.
 - `SECURITY DEFINER` functions use `SET search_path = ''` and schema-qualified identifiers. Public execute grants are explicit; internal helpers are revoked.
+- `get_collection` returns a public collection or one owned by the caller; private collections are `null` for other members and anonymous callers. `list_my_collections` requires an active authenticated user. Public collection detail only includes published products.
+- `get_public_profile` returns the explicit `profiles_public` projection plus aggregate follower counts, the caller's own follow state, and approved contribution summaries; it never exposes email or private user IDs.
+- `toggle_follow` rejects self-follows, requires an active target profile, enforces a rate limit, and creates a notification for the followee.
 - Rate limits are enforced for comments, requests, votes, reports, contributions, favorites, and profile deletion requests.
 - `assert_active_user()` blocks suspended, banned, deleted, and deletion-pending accounts from writes.
 
@@ -44,6 +47,7 @@
 ## Privacy
 
 - Public vote data is aggregate. Voter rows are protected by RLS and accessible only to the voter or admins.
+- Follower rows are protected by RLS; public profile responses expose aggregate counts and the caller's own follow state only.
 - Requests are anonymous by default at the data-model level; public projections omit creators.
 - Comments expose display name, username, role, and avatar, not email or user IDs.
 - Profile email lives in `auth.users`, not `profiles`.
@@ -72,8 +76,8 @@
 
 ## Known residual risks
 
-- No live PostgREST/Supabase instance has validated runtime headers, function exposure, or Edge Function behavior in this environment. This is a deployment-blocking verification item, not a claim of security.
-- Docker, the Supabase CLI, and Deno are available locally, but the full Supabase Auth/PostgREST/Storage runtime has not been exercised; SQL tests still use a shim and Edge Function tests use in-process handler fakes.
+- Live Auth/PostgREST checks were performed against a local Supabase stack on 2026-11-09, including password sign-in, anonymous/public views, RLS denial on private tables, collection/follow lifecycles, evidence URL validation, vote privacy, admin-only RPCs, and Storage object upload/read/delete policies by role. Live Edge Function invocation and deployed production headers were not exercised. These remain deployment verification items, not claims of security.
+- SQL tests still use the plain-PostgreSQL shim, and Edge Function tests use in-process handler fakes; neither is a substitute for a hosted environment.
 - No penetration test, dependency audit enforcement, rate-limit load test, or production monitoring has been performed.
 - A compromised admin account can perform all admin actions by design; MFA and alerting are deployment requirements.
 - Client-side secrets are never acceptable. If a service-role key is ever exposed, rotate it immediately and review logs.

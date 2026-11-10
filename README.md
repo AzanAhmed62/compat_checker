@@ -4,7 +4,7 @@ Compat Checker is an evidence-backed hardware compatibility platform for repair 
 
 The repository contains three surfaces:
 
-- **Android app** - Kotlin, Jetpack Compose, Material 3, MVVM/UDF, Room offline cache, DataStore settings, English/Urdu with RTL, deep links.
+- **Android app** - Kotlin, Jetpack Compose, Material 3, MVVM/UDF, Room offline cache (catalog and guides), DataStore settings, English/Urdu with RTL, deep links, collections, follows, public profiles, and leaderboards.
 - **Admin console** - React 19, TypeScript, Vite, TanStack Query, Supabase JS, plus public privacy and account-deletion routes.
 - **Backend** - Supabase/PostgreSQL ordered migrations, RLS, explicit public views, server-side compatibility evaluation, tests, and Edge Functions.
 
@@ -14,7 +14,7 @@ The repository contains three surfaces:
 apps/android       Native Android app
 apps/admin_panel   Admin web console and public legal/deletion pages
 supabase           Migrations, seed, SQL tests, Edge Functions, config
-scripts            Docker-free PostgreSQL test runners
+scripts            Plain-PostgreSQL test runners
 docs               Product, architecture, security, test, and release docs
 ```
 
@@ -27,6 +27,7 @@ docs               Product, architecture, security, test, and release docs
 5. Only the public anon/publishable key is allowed in clients. Service-role keys stay server-side.
 6. Applied migrations are immutable; changes require a new ordered migration and tests.
 7. Rule evidence is retired, not deleted.
+8. Collections are public or private at the owner's choice; private collections are never returned to other members.
 
 ## Local backend
 
@@ -39,32 +40,36 @@ supabase db reset
 
 `seed.sql` is synthetic local/test data. Never run it against production.
 
-Docker-free PostgreSQL/RLS verification:
+Plain-PostgreSQL/RLS verification (Linux/macOS, requires PostgreSQL client
+tools and a reachable disposable database; it does not start a server):
+
+```bash
+PGPASSWORD=postgres PGUSER=supabase_admin PGPORT=55432 ./scripts/db_test.sh --keep
+```
+
+Windows:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/db_test.ps1 -Keep
 ```
 
-or on Bash:
-
-```bash
-./scripts/db_test.sh
-```
-
-The script refuses databases that do not begin with `compat_` and applies the test-only `supabase/tests/00_shim.sql` first. That shim must never be applied to production.
+The scripts refuse databases that do not begin with `compat_` and apply the
+test-only `supabase/tests/00_shim.sql` first. That shim must never be applied to
+production.
 
 ## Admin console
 
-```powershell
+```bash
 cd apps/admin_panel
-Copy-Item .env.example .env.local
-npm.cmd ci
-npm.cmd run typecheck
-npm.cmd test
-npm.cmd run build
+cp .env.example .env.local
+npm ci
+npm run typecheck
+npm test
+npm run build
 ```
 
-Use `npm.cmd` on this Windows machine. The console uses only `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`; authorization is enforced by RLS and admin RPCs.
+On Windows use `npm.cmd`. The console uses only `VITE_SUPABASE_URL` and
+`VITE_SUPABASE_ANON_KEY`; authorization is enforced by RLS and admin RPCs.
 
 Public routes:
 
@@ -81,12 +86,22 @@ Add untracked `apps/android/local.properties` (Android Studio normally adds
 `sdk.dir`; set it manually when building from the command line):
 
 ```properties
-sdk.dir=C\:\\Users\\you\\AppData\\Local\\Android\\Sdk
+sdk.dir=/home/you/Android/Sdk
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your-public-anon-or-publishable-key
 ```
 
 Local HTTP is accepted only in debug builds for emulator/local hosts. A key prefixed `sb_secret_` or a JWT declaring `service_role` is rejected at startup.
+
+Linux/macOS:
+
+```bash
+cd apps/android
+JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 \
+  ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:assembleDebugAndroidTest
+```
+
+Windows:
 
 ```powershell
 cd apps/android
@@ -94,14 +109,14 @@ $env:JAVA_HOME='C:\Program Files\Java\jdk-21.0.12'
 .\gradlew.bat :app:assembleDebug :app:testDebugUnitTest :app:assembleDebugAndroidTest
 ```
 
-Set `GRADLE_USER_HOME` to a cache on a drive with free space if the default Gradle
-home is constrained. The SDK platform and build tools for API 36 must be installed.
-Close Android Studio before CLI builds on a low-memory machine.
+Set `GRADLE_USER_HOME` to a cache on a drive with free space if the default
+Gradle home is constrained. The SDK platform and build tools for API 36 must be
+installed. Close Android Studio before CLI builds on a low-memory machine.
 
 Run instrumentation tests on a booted emulator/device:
 
-```powershell
-.\gradlew.bat :app:connectedDebugAndroidTest
+```bash
+./gradlew :app:connectedDebugAndroidTest
 ```
 
 Deep links:
@@ -110,19 +125,56 @@ Deep links:
 - `compatchecker://checker`
 - `compatchecker://guide/{id}`
 - `compatchecker://rule/{id}`
+- `compatchecker://collection/{id}`
+- `compatchecker://profile/{id}`
+
+Version `1.1.0` adds:
+
+- Public and private collections with product add/remove and visibility changes.
+- Follow/unfollow, public profile aggregates, and a reputation leaderboard.
+- Brand filters in catalog search and a retry action.
+- Offline caching for guide lists and guide details (Room schema version 2).
+- A small, safe Markdown renderer for guide bodies (raw HTML stays text;
+  only absolute HTTP(S) links are clickable).
+- Notification routing for product, guide, rule, profile, and collection links,
+  with a visible message for unsupported or malformed links.
 
 ## Verification status
 
-Observed in this workspace on 2026-10-24:
+Observed in this workspace on 2026-11-09:
 
-- Database: 6 SQL/RLS test files passed with the Docker-free PostgreSQL runner after all 11 migrations and seed.
-- Admin: TypeScript build/typecheck passed; 12 Vitest tests passed in 2 files; production build transformed 181 modules (252.90 kB JS, 80.74 kB gzip; 16.84 kB CSS). Public pages have no live-backend UI test.
-- Android: `:app:assembleDebug` passed; **7 JVM tests in 3 test classes** passed with no failures. The debug APK is 25,664,550 bytes (24.48 MiB), signed with the Android Debug certificate; SHA-256 is `87426311575EC8BC78A0F3F699173DCE52FF8D2A6CA8840AE6456150C9499F27`. The checker Compose instrumentation suite compiles; it has not run on a device/emulator. No live backend runtime has been exercised, so this is not a release validation.
-- Edge Functions: Deno typecheck passed; **24 handler tests passed**. No hosted function, real admin JWT/database RPC, or scheduler invocation has been tested.
-- CI has database, admin, Edge Function, and Android jobs. It has not run on GitHub Actions.
-- No remote Supabase project, Play signing key, or Play Console access has been used.
+- Database: **7 SQL/RLS test files passed** with the plain-PostgreSQL runner
+  after all **12 migrations** and the updated seed.
+- Full local Supabase stack: **started and reset successfully** with the pinned
+  `public.ecr.aws/supabase/postgres:17.11.0.011` image and the isolated ports
+  in `supabase/config.toml`. Auth health and password sign-in returned 200;
+  public views, RLS denials, collection/follow lifecycles, evidence URL
+  validation, vote privacy, and admin-only RPCs were exercised over HTTP.
+  Storage object upload/read/delete policies were exercised by role; live Edge
+  Function invocation was not.
+- Admin: TypeScript typecheck passed; **15 Vitest tests passed in 3 files**;
+  production build transformed 181 modules (498.34 kB JS, 142.18 kB gzip;
+  16.84 kB CSS). Sign-in, dashboard, catalog, and users pages were exercised
+  against the live local stack in a browser with no console errors. The public
+  `/privacy` and `/delete-account` pages still have no deployed-backend test.
+- Android: `:app:assembleDebug`, `:app:assembleDebugAndroidTest`, and
+  **17 JVM tests in 6 test classes** passed with no failures. On 2026-11-10
+  the connected suite passed **5/5** on a physical OnePlus 6T (Android 11),
+  including the Room 1-to-2 migration. Live smoke testing against the local
+  API covered catalog, product detail, auth, collections, follows, leaderboard,
+  notifications, guides, offline cache, deep links, themes, and Urdu/RTL.
+  Favorites/votes/comments/request/contribution mutations, account deletion,
+  session expiry, 200% font scale, and TalkBack remain unverified. This is not
+  a release validation.
+- Edge Functions: Deno typecheck passed; **24 handler tests passed** with 0
+  failures. No hosted function, real admin JWT/database RPC, or scheduler
+  invocation has been tested.
+- CI has database, admin, Edge Function, and Android jobs. It has not run on
+  GitHub Actions.
+- No remote Supabase project, Play signing key, or Play Console access has been
+  used.
 
-See [`docs/KNOWN_ISSUES.md`](docs/KNOWN_ISSUES.md) for blockers.
+Remaining release gaps are tracked in [`docs/KNOWN_ISSUES.md`](docs/KNOWN_ISSUES.md).
 
 ## Documentation
 
@@ -136,6 +188,7 @@ See [`docs/KNOWN_ISSUES.md`](docs/KNOWN_ISSUES.md) for blockers.
 - [Play Store release](docs/PLAY_STORE_RELEASE.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Known issues](docs/KNOWN_ISSUES.md)
+- [v1.1 implementation report](docs/V1_1_IMPLEMENTATION_REPORT.md)
 - [Next task](NEXT_TASK.md)
 
 ## License and data

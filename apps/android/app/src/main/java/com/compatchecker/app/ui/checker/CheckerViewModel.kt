@@ -53,6 +53,7 @@ class CheckerViewModel(
                                     name = product.name,
                                     modelNumber = product.modelNumber,
                                     brandName = product.brandName,
+                                    brandSlug = product.brandSlug,
                                     categoryName = product.categoryName,
                                     categorySlug = product.categorySlug,
                                     summary = product.summary,
@@ -93,7 +94,7 @@ class CheckerViewModel(
         pickerJob = viewModelScope.launch {
             delay(250)
             _state.update { it.copy(pickerLoading = true) }
-            runCatching { catalog.search(query, null, 20, 0) }
+            runCatching { catalog.search(query, null, null, 20, 0) }
                 .onSuccess { page ->
                     _state.update {
                         it.copy(pickerResults = page.items, pickerLoading = false)

@@ -92,10 +92,19 @@ Public guide views expose published rows, author display name only when active, 
 - `get_rule_detail(p_rule_id)` — rule, all evidence, caller vote.
 - `get_guide_detail(p_guide_id)` — published guide, ordered steps, comment count.
 - `product_graph(p_product_id, p_depth)` — exploratory graph, depth capped, not a compatibility verdict.
+- `get_collection(p_collection_id)` — public collection or one owned by the caller; private collections of others return `null`.
+- `list_my_collections()` — authenticated caller's collections with item counts and visibility.
+- `get_public_profile(p_user_id)` — active public profile plus aggregate followers/following, follow state, and approved contribution summaries.
+- `reputation_leaderboard(p_limit)` — ranked active profiles, capped at 50.
 - `public_trending_products(p_limit)` — aggregate popularity.
 - `public_stats` view — counts only.
 
-Member functions include favorites, request creation/voting, comments, reports, contributions, notification reads, profile update, reputation, and account deletion request/cancel. Admin functions cover dashboard, users, roles/status, moderation, contributions, requests, rules/versions/rollback, CSV import, and analytics.
+Member functions include favorites, collection create/update/add/remove/delete,
+follow/unfollow, request creation/voting, comments, reports, contributions,
+notification reads, profile update, reputation, and account deletion
+request/cancel. Admin functions cover dashboard, users, roles/status,
+moderation, contributions, requests, rules/versions/rollback, CSV import, and
+analytics.
 
 ## Storage
 

@@ -2,9 +2,14 @@ package com.compatchecker.app.data.repository
 
 import com.compatchecker.app.data.remote.CategoryDto
 import com.compatchecker.app.data.remote.CheckedRuleDto
+import com.compatchecker.app.data.remote.CollectionDetailDto
+import com.compatchecker.app.data.remote.CollectionDto
+import com.compatchecker.app.data.remote.CollectionItemDto
 import com.compatchecker.app.data.remote.CommentDto
 import com.compatchecker.app.data.remote.CompatibilityResultDto
 import com.compatchecker.app.data.remote.ContributionDto
+import com.compatchecker.app.data.remote.LeaderboardEntryDto
+import com.compatchecker.app.data.remote.PublicProfileDto
 import com.compatchecker.app.data.remote.EvidenceDto
 import com.compatchecker.app.data.remote.GuideDetailDto
 import com.compatchecker.app.data.remote.GuideDto
@@ -24,10 +29,16 @@ import com.compatchecker.app.domain.model.AppNotification
 import com.compatchecker.app.domain.model.Brand
 import com.compatchecker.app.domain.model.Category
 import com.compatchecker.app.domain.model.CheckedRule
+import com.compatchecker.app.domain.model.CollectionDetail
+import com.compatchecker.app.domain.model.CollectionItem
+import com.compatchecker.app.domain.model.CollectionSummary
 import com.compatchecker.app.domain.model.Comment
 import com.compatchecker.app.domain.model.CommunityRequest
 import com.compatchecker.app.domain.model.CompatibilityResult
 import com.compatchecker.app.domain.model.Contribution
+import com.compatchecker.app.domain.model.LeaderboardEntry
+import com.compatchecker.app.domain.model.PublicProfile
+import com.compatchecker.app.domain.model.RecentContribution
 import com.compatchecker.app.domain.model.Evidence
 import com.compatchecker.app.domain.model.GuideDetail
 import com.compatchecker.app.domain.model.GuideLink
@@ -51,6 +62,7 @@ internal fun ProductSummaryDto.toDomain(urlFor: UrlFor): ProductSummary = Produc
     name = name,
     modelNumber = modelNumber,
     brandName = brandName,
+    brandSlug = brandSlug,
     categoryName = categoryName,
     categorySlug = categorySlug,
     summary = summary,
@@ -64,6 +76,7 @@ internal fun ProductDto.toSummary(urlFor: UrlFor): ProductSummary = ProductSumma
     name = name,
     modelNumber = modelNumber,
     brandName = brandName,
+    brandSlug = brandSlug,
     categoryName = categoryName,
     categorySlug = categorySlug,
     summary = summary,
@@ -279,4 +292,72 @@ internal fun NotificationDto.toDomain() = AppNotification(
     link = link,
     readAt = readAt,
     createdAt = createdAt,
+)
+
+internal fun CollectionDto.toDomain() = CollectionSummary(
+    id = id,
+    title = title,
+    description = description,
+    isPublic = isPublic,
+    itemCount = itemCount,
+    createdAt = createdAt,
+    updatedAt = updatedAt,
+)
+
+internal fun CollectionItemDto.toDomain(urlFor: UrlFor) = CollectionItem(
+    productId = productId,
+    productName = productName,
+    productSlug = productSlug,
+    modelNumber = modelNumber,
+    summary = summary,
+    brandName = brandName,
+    brandSlug = brandSlug,
+    categoryName = categoryName,
+    categorySlug = categorySlug,
+    imageUrl = urlFor(imagePath),
+    note = note,
+    addedAt = addedAt,
+)
+
+internal fun CollectionDetailDto.toDomain(urlFor: UrlFor) = CollectionDetail(
+    id = id,
+    title = title,
+    description = description,
+    isPublic = isPublic,
+    isOwner = isOwner,
+    ownerUsername = ownerUsername,
+    ownerDisplayName = ownerDisplayName,
+    items = items.map { it.toDomain(urlFor) },
+)
+
+internal fun PublicProfileDto.toDomain(urlFor: UrlFor) = PublicProfile(
+    id = id,
+    username = username,
+    displayName = displayName,
+    bio = bio,
+    avatarUrl = urlFor(avatarUrl),
+    role = role,
+    createdAt = createdAt,
+    reputationPoints = reputationPoints,
+    reputationTier = reputationTier,
+    approvedContributions = approvedContributions,
+    publishedRules = publishedRules,
+    followers = followers,
+    following = following,
+    isFollowing = isFollowing,
+    isSelf = isSelf,
+    recentContributions = recentContributions.map {
+        RecentContribution(it.kind, it.status, it.reviewedAt)
+    },
+)
+
+internal fun LeaderboardEntryDto.toDomain(urlFor: UrlFor) = LeaderboardEntry(
+    id = id,
+    username = username,
+    displayName = displayName,
+    avatarUrl = urlFor(avatarUrl),
+    role = role,
+    reputationPoints = reputationPoints,
+    reputationTier = reputationTier,
+    approvedContributions = approvedContributions,
 )

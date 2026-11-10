@@ -7,9 +7,9 @@ This document describes deployment preparation. No remote Supabase project, Play
 - Node.js 22+ and npm
 - JDK 17+ (JDK 21 verified locally)
 - Android SDK platform 36 and build-tools 36.x
-- Docker engine and Supabase CLI for the full local stack (full runtime verification is still pending)
+- Docker engine and Supabase CLI for the full local stack (Auth/PostgREST/RLS and Storage object policies verified locally on 2026-11-09; live Edge Function invocation still pending)
 - Deno 2.x for Edge Function typechecking and tests
-- PostgreSQL client tools for the Docker-free test runner
+- PostgreSQL client tools and a disposable server for the plain-PostgreSQL test runner
 - An authorized Supabase project for remote deployment
 
 ## Local backend
@@ -23,28 +23,35 @@ supabase db reset
 
 `supabase db reset` applies the ordered migrations and `seed.sql` to the **local** database. Never run `seed.sql` against production: it creates synthetic accounts, experimental data, and local-only evidence URLs.
 
-Docker-free SQL/RLS verification in this workspace:
+Plain-PostgreSQL SQL/RLS verification in this workspace (Linux/macOS):
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/db_test.ps1 -Keep
+```bash
+PGPASSWORD=postgres PGUSER=supabase_admin PGPORT=55432 ./scripts/db_test.sh --keep
 ```
+
+Windows: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/db_test.ps1 -Keep`.
 
 This uses a test-only Supabase shim. The shim is not a deployment artifact.
 
-Local API: `http://127.0.0.1:54321`; database: `127.0.0.1:54322`; Studio: `http://127.0.0.1:54323`.
+Local API: `http://127.0.0.1:55321`; database: `127.0.0.1:55322`; Studio is
+disabled by default (port `55323` if enabled); local SMTP: `127.0.0.1:55324`.
+The pooler is disabled. These ports deliberately do not overlap the default
+Supabase ports used by other projects on the same workstation.
 Seed admin: `admin@compatchecker.test` / `CompatLocal!2026` (local synthetic data only).
 
 ## Admin console
 
-```powershell
+```bash
 cd apps/admin_panel
-Copy-Item .env.example .env.local
+cp .env.example .env.local
 # Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY from local or authorized project.
-npm.cmd ci
-npm.cmd run typecheck
-npm.cmd test
-npm.cmd run build
+npm ci
+npm run typecheck
+npm test
+npm run build
 ```
+
+On Windows use `npm.cmd`.
 
 Deploy the `dist` directory to a static host. Configure SPA fallback to `index.html` for `/privacy`, `/delete-account`, and all admin routes. Set `VITE_DATA_CONTROLLER` and `VITE_SUPPORT_EMAIL` before publishing; these values are rendered on the public privacy page. The console holds only the public anon/publishable key; database RLS and admin RPC checks are authoritative.
 
@@ -150,4 +157,4 @@ Release builds require signing values and fail fast without them. See `docs/PLAY
 
 ## Known environment limitations
 
-Docker, the Supabase CLI, and Deno are available in this workspace, but the full Supabase runtime has not been brought up or exercised here. Edge Function typechecking and 24 handler tests pass, and instrumented Compose tests are compiled but have not run without a usable emulator/device. Do not treat those results as a live-stack or release validation.
+Docker, the Supabase CLI, and Deno are available in this workspace. The pinned local Supabase stack was started and reset on 2026-11-09, and Auth/PostgREST/RLS, Storage object policies, and the admin console were exercised over HTTP. Live Edge Function invocation and a production deployment were not. Edge Function typechecking and 24 handler tests pass, and instrumented Compose tests are compiled but have not run without a usable emulator/device. Do not treat local results as production release validation.

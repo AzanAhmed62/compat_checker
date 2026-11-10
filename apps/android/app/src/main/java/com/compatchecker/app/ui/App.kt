@@ -1,5 +1,9 @@
 package com.compatchecker.app.ui
 
+import android.content.Context
+import android.content.ContextWrapper
+import android.content.Intent
+import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,11 +21,14 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.util.Consumer
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -46,6 +53,10 @@ import com.compatchecker.app.ui.profile.ProfileScreen
 import com.compatchecker.app.ui.requests.RequestsScreen
 import com.compatchecker.app.ui.rules.RuleScreen
 import com.compatchecker.app.ui.settings.SettingsScreen
+import com.compatchecker.app.ui.social.CollectionDetailScreen
+import com.compatchecker.app.ui.social.CollectionsScreen
+import com.compatchecker.app.ui.social.LeaderboardScreen
+import com.compatchecker.app.ui.social.PublicProfileScreen
 
 private object Routes {
     const val CATALOG = "catalog"
@@ -55,12 +66,16 @@ private object Routes {
     const val PROFILE = "profile"
     const val AUTH = "auth"
     const val FAVORITES = "favorites"
+    const val COLLECTIONS = "collections"
     const val CONTRIBUTIONS = "contributions"
     const val NOTIFICATIONS = "notifications"
+    const val LEADERBOARD = "leaderboard"
     const val SETTINGS = "settings"
     const val PRODUCT = "product/{productId}"
     const val GUIDE = "guide/{guideId}"
     const val RULE = "rule/{ruleId}"
+    const val COLLECTION = "collection/{collectionId}"
+    const val PUBLIC_PROFILE = "profile/{userId}"
 
     fun checker(productId: String? = null): String =
         if (productId.isNullOrBlank()) "checker" else "checker?productId=$productId"
@@ -68,6 +83,8 @@ private object Routes {
     fun product(id: String) = "product/$id"
     fun guide(id: String) = "guide/$id"
     fun rule(id: String) = "rule/$id"
+    fun collection(id: String) = "collection/$id"
+    fun publicProfile(id: String) = "profile/$id"
 }
 
 private data class Tab(
@@ -93,6 +110,15 @@ fun CompatApp(container: AppContainer) {
     }
 
     val navController = rememberNavController()
+    val activity = LocalContext.current.findActivity()
+    DisposableEffect(navController, activity) {
+        if (activity == null) return@DisposableEffect onDispose {}
+        val listener = Consumer<Intent> { intent ->
+            navController.handleDeepLink(intent)
+        }
+        activity.addOnNewIntentListener(listener)
+        onDispose { activity.removeOnNewIntentListener(listener) }
+    }
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
     val currentBase = currentRoute?.substringBefore('?')
@@ -156,8 +182,10 @@ fun CompatApp(container: AppContainer) {
                     profiles = container.profileRepository,
                     onSignIn = openAuth,
                     onOpenFavorites = { navController.navigate(Routes.FAVORITES) },
+                    onOpenCollections = { navController.navigate(Routes.COLLECTIONS) },
                     onOpenContributions = { navController.navigate(Routes.CONTRIBUTIONS) },
                     onOpenNotifications = { navController.navigate(Routes.NOTIFICATIONS) },
+                    onOpenLeaderboard = { navController.navigate(Routes.LEADERBOARD) },
                     onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                 )
             }
@@ -186,6 +214,9 @@ fun CompatApp(container: AppContainer) {
                     onRuleClick = { navController.navigate(Routes.rule(it)) },
                     onGuideClick = { navController.navigate(Routes.guide(it)) },
                     onCompare = { navController.navigate(Routes.checker(it)) },
+                    social = container.socialRepository,
+                    signedIn = signedIn,
+                    onOpenCollections = { navController.navigate(Routes.COLLECTIONS) },
                 )
             }
             composable(
@@ -236,6 +267,49 @@ fun CompatApp(container: AppContainer) {
                     onOpenNotification = { openNotification(navController, it) },
                 )
             }
+            composable(Routes.COLLECTIONS) {
+                CollectionsScreen(
+                    social = container.socialRepository,
+                    onBack = { navController.popBackStack() },
+                    onCollectionClick = { navController.navigate(Routes.collection(it)) },
+                )
+            }
+            composable(
+                route = Routes.COLLECTION,
+                arguments = listOf(navArgument("collectionId") { type = NavType.StringType }),
+                deepLinks = listOf(
+                    navDeepLink { uriPattern = "compatchecker://collection/{collectionId}" },
+                ),
+            ) { entry ->
+                CollectionDetailScreen(
+                    collectionId = entry.arguments?.getString("collectionId").orEmpty(),
+                    social = container.socialRepository,
+                    onBack = { navController.popBackStack() },
+                    onProductClick = { navController.navigate(Routes.product(it)) },
+                )
+            }
+            composable(Routes.LEADERBOARD) {
+                LeaderboardScreen(
+                    social = container.socialRepository,
+                    onBack = { navController.popBackStack() },
+                    onProfileClick = { navController.navigate(Routes.publicProfile(it)) },
+                )
+            }
+            composable(
+                route = Routes.PUBLIC_PROFILE,
+                arguments = listOf(navArgument("userId") { type = NavType.StringType }),
+                deepLinks = listOf(
+                    navDeepLink { uriPattern = "compatchecker://profile/{userId}" },
+                ),
+            ) { entry ->
+                PublicProfileScreen(
+                    userId = entry.arguments?.getString("userId").orEmpty(),
+                    social = container.socialRepository,
+                    signedIn = signedIn,
+                    onBack = { navController.popBackStack() },
+                    onAuthRequired = openAuth,
+                )
+            }
             composable(Routes.SETTINGS) {
                 SettingsScreen(
                     preferences = container.preferencesRepository,
@@ -267,15 +341,38 @@ fun CompatApp(container: AppContainer) {
     }
 }
 
-private fun openNotification(navController: androidx.navigation.NavHostController, notification: AppNotification) {
-    val link = notification.link ?: return
-    val identifier = link.trimEnd('/').substringAfterLast('/').substringBefore('?')
-    if (identifier.isBlank()) return
-    when {
-        link.contains("/product/") -> navController.navigate(Routes.product(identifier))
-        link.contains("/guide/") -> navController.navigate(Routes.guide(identifier))
-        link.contains("/rule/") -> navController.navigate(Routes.rule(identifier))
+private fun openNotification(
+    navController: androidx.navigation.NavHostController,
+    notification: AppNotification,
+): Boolean = when (val destination = parseNotificationLink(notification.link)) {
+    NotificationDestination.None -> true
+    is NotificationDestination.Product -> {
+        navController.navigate(Routes.product(destination.id))
+        true
     }
+    is NotificationDestination.Guide -> {
+        navController.navigate(Routes.guide(destination.id))
+        true
+    }
+    is NotificationDestination.Rule -> {
+        navController.navigate(Routes.rule(destination.id))
+        true
+    }
+    is NotificationDestination.Profile -> {
+        navController.navigate(Routes.publicProfile(destination.id))
+        true
+    }
+    is NotificationDestination.Collection -> {
+        navController.navigate(Routes.collection(destination.id))
+        true
+    }
+    NotificationDestination.Unsupported -> false
+}
+
+private tailrec fun Context.findActivity(): ComponentActivity? = when (this) {
+    is ComponentActivity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }
 
 @Composable

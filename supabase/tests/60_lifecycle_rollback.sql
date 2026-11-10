@@ -161,8 +161,21 @@ values (
   'products/aurora-x1/front.webp', 'Synthetic product image',
   'approved', 1, '00000000-0000-4000-8000-000000000001'
 );
+-- Ranked search order is not guaranteed to put the target first. Locate the
+-- exact product by UUID and assert both its inclusion and its media projection.
+select tests.assert_true(
+  exists (
+    select 1
+    from jsonb_array_elements(public.search_products('Aurora X1')->'items') item
+    where item ->> 'id' = '10000000-0000-4000-8000-000000000001'
+  ),
+  'the target product is included in ranked search results');
 select tests.assert_text(
-  public.search_products('Aurora X1')->'items'->0->>'image_path',
+  (
+    select item ->> 'image_path'
+    from jsonb_array_elements(public.search_products('Aurora X1')->'items') item
+    where item ->> 'id' = '10000000-0000-4000-8000-000000000001'
+  ),
   'products/aurora-x1/front.webp',
   'approved media is projected through search');
 

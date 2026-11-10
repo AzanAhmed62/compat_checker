@@ -55,8 +55,10 @@ fun ProfileScreen(
     profiles: ProfileRepository,
     onSignIn: () -> Unit,
     onOpenFavorites: () -> Unit,
+    onOpenCollections: () -> Unit,
     onOpenContributions: () -> Unit,
     onOpenNotifications: () -> Unit,
+    onOpenLeaderboard: () -> Unit,
     onOpenSettings: () -> Unit,
 ) {
     val viewModel: ProfileViewModel = compatViewModel { ProfileViewModel(auth, profiles) }
@@ -129,6 +131,7 @@ fun ProfileScreen(
                         }
                     }
                     ProfileLink(stringResource(R.string.profile_favorites), profile.favoriteCount.toString(), onOpenFavorites)
+                    ProfileLink(stringResource(R.string.profile_collections), "", onOpenCollections)
                     ProfileLink(stringResource(R.string.profile_contributions), "", onOpenContributions)
                     ProfileLink(
                         stringResource(R.string.profile_notifications),
@@ -137,6 +140,7 @@ fun ProfileScreen(
                         } else "",
                         onOpenNotifications,
                     )
+                    ProfileLink(stringResource(R.string.profile_leaderboard), "", onOpenLeaderboard)
                     ProfileLink(stringResource(R.string.profile_settings), "", onOpenSettings)
 
                     if (state.reputation?.entries?.isNotEmpty() == true) {

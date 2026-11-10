@@ -38,3 +38,4 @@ Thumbs.db
 
 # Supabase CLI local state
 supabase/.temp/
+supabase/.branches/

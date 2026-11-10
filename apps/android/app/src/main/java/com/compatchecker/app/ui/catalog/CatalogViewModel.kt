@@ -2,6 +2,7 @@ package com.compatchecker.app.ui.catalog
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.compatchecker.app.domain.model.Brand
 import com.compatchecker.app.domain.model.Category
 import com.compatchecker.app.domain.model.ProductSummary
 import com.compatchecker.app.domain.repository.CatalogRepository
@@ -18,7 +19,9 @@ data class CatalogUiState(
     val query: String = "",
     val products: List<ProductSummary> = emptyList(),
     val categories: List<Category> = emptyList(),
+    val brands: List<Brand> = emptyList(),
     val selectedCategory: String? = null,
+    val selectedBrand: String? = null,
     val total: Int = 0,
     val loading: Boolean = false,
     val loadingMore: Boolean = false,
@@ -34,7 +37,8 @@ class CatalogViewModel(private val catalog: CatalogRepository) : ViewModel() {
     init {
         viewModelScope.launch {
             val categories = catalog.categories()
-            _state.update { it.copy(categories = categories) }
+            val brands = catalog.brands()
+            _state.update { it.copy(categories = categories, brands = brands) }
         }
         search(immediate = true)
     }
@@ -54,6 +58,24 @@ class CatalogViewModel(private val catalog: CatalogRepository) : ViewModel() {
         search(immediate = true)
     }
 
+    fun selectBrand(slug: String?) {
+        if (slug == _state.value.selectedBrand) return
+        _state.update { it.copy(selectedBrand = slug) }
+        search(immediate = true)
+    }
+
+    fun refresh() {
+        viewModelScope.launch {
+            _state.update {
+                it.copy(
+                    categories = catalog.categories(),
+                    brands = catalog.brands(),
+                )
+            }
+        }
+        search(immediate = true)
+    }
+
     fun retry() = search(immediate = true)
 
     fun loadMore() {
@@ -66,6 +88,7 @@ class CatalogViewModel(private val catalog: CatalogRepository) : ViewModel() {
                 catalog.search(
                     query = current.query,
                     categorySlug = current.selectedCategory,
+                    brandSlug = current.selectedBrand,
                     limit = PAGE_SIZE,
                     offset = current.products.size,
                 )
@@ -95,6 +118,7 @@ class CatalogViewModel(private val catalog: CatalogRepository) : ViewModel() {
                 catalog.search(
                     query = current.query,
                     categorySlug = current.selectedCategory,
+                    brandSlug = current.selectedBrand,
                     limit = PAGE_SIZE,
                     offset = 0,
                 )

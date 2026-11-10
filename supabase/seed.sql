@@ -21,37 +21,47 @@ $$;
 -- Local accounts and profiles
 -- ---------------------------------------------------------------------------
 
+-- GoTrue scans these legacy token columns into non-nullable strings even for
+-- confirmed local accounts. Supabase leaves them nullable with no default, so
+-- the seed must write empty strings explicitly or password sign-in fails.
 insert into auth.users (
   id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
+  confirmation_token, recovery_token, email_change_token_new, email_change,
   raw_app_meta_data, raw_user_meta_data, created_at, updated_at
 )
 values
   ('00000000-0000-4000-8000-000000000001', '00000000-0000-0000-0000-000000000000',
    'authenticated', 'authenticated', 'admin@compatchecker.test',
    pg_temp.local_password('CompatLocal!2026'), now(),
+   '', '', '', '',
    '{"provider":"email","providers":["email"]}'::jsonb,
    '{"display_name":"Local Administrator"}'::jsonb, now(), now()),
   ('00000000-0000-4000-8000-000000000002', '00000000-0000-0000-0000-000000000000',
    'authenticated', 'authenticated', 'trusted@compatchecker.test',
    pg_temp.local_password('CompatLocal!2026'), now(),
+   '', '', '', '',
    '{"provider":"email","providers":["email"]}'::jsonb,
    '{"display_name":"Trusted Reviewer"}'::jsonb, now(), now()),
   ('00000000-0000-4000-8000-000000000003', '00000000-0000-0000-0000-000000000000',
    'authenticated', 'authenticated', 'contributor@compatchecker.test',
    pg_temp.local_password('CompatLocal!2026'), now(),
+   '', '', '', '',
    '{"provider":"email","providers":["email"]}'::jsonb,
    '{"display_name":"Sample Contributor"}'::jsonb, now(), now()),
   ('00000000-0000-4000-8000-000000000004', '00000000-0000-0000-0000-000000000000',
    'authenticated', 'authenticated', 'member@compatchecker.test',
    pg_temp.local_password('CompatLocal!2026'), now(),
+   '', '', '', '',
    '{"provider":"email","providers":["email"]}'::jsonb,
    '{"display_name":"Sample Member"}'::jsonb, now(), now())
 on conflict (id) do nothing;
 
-insert into auth.identities (user_id, identity_data, provider, provider_id, last_sign_in_at)
+insert into auth.identities (
+  user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at
+)
 select u.id,
        jsonb_build_object('sub', u.id::text, 'email', u.email, 'email_verified', true),
-       'email', u.id::text, now()
+       'email', u.id::text, now(), now(), now()
 from auth.users u
 where u.id in (
   '00000000-0000-4000-8000-000000000001',
@@ -326,7 +336,8 @@ on conflict do nothing;
 insert into public.notifications (user_id, type, title, body, link)
 values (
   '00000000-0000-4000-8000-000000000003',
-  'system', 'New follower', 'Sample Member started following you.', '/profile'
+  'system', 'New follower', 'Sample Member started following you.',
+  '/profile/00000000-0000-4000-8000-000000000004'
 )
 on conflict do nothing;
 

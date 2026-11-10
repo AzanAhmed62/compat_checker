@@ -1,93 +1,143 @@
 #!/usr/bin/env bash
-# Rebuilds a disposable PostgreSQL database and runs the SQL/RLS test suite.
-# Docker-free fallback for environments without the Supabase CLI.
-# Never point this script at a remote or production database.
+# Rebuild a disposable PostgreSQL database and run every SQL/RLS test file.
+#
+# This is the plain-PostgreSQL Linux/macOS path for validating the Supabase
+# migrations. It applies the plain-PostgreSQL Supabase shim, ordered migrations,
+# deterministic seed, and SQL test suite. Never point it at a remote database.
 set -euo pipefail
+export LC_ALL=C
 
-DATABASE="${DB_NAME:-compat_test}"
-PORT="${PGPORT:-55432}"
-PGUSER="${PGUSER:-postgres}"
-PGHOST="${PGHOST:-localhost}"
-KEEP="${KEEP_DB:-0}"
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-TEST_DIR="$ROOT/supabase/tests"
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+migration_dir="$repo_root/supabase/migrations"
+test_dir="$repo_root/supabase/tests"
 
-if [[ ! "$DATABASE" =~ ^compat_[a-z0-9_]+$ ]]; then
-  echo "Refusing unsafe database name '$DATABASE'" >&2
+database="${DATABASE:-compat_test}"
+port="${PGPORT:-55432}"
+user="${PGUSER:-postgres}"
+host="${PGHOST:-localhost}"
+keep=0
+
+usage() {
+  cat <<'EOF'
+Usage: scripts/db_test.sh [--keep] [--database NAME] [--port PORT] [--user USER] [--host HOST]
+
+Environment variables: PGPORT, PGUSER, PGHOST, PGPASSWORD, DATABASE.
+The database name must match compat_* so this can never target a remote project.
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --keep|-k) keep=1; shift ;;
+    --database) database="${2:?missing database name}"; shift 2 ;;
+    --port) port="${2:?missing port}"; shift 2 ;;
+    --user) user="${2:?missing user}"; shift 2 ;;
+    --host) host="${2:?missing host}"; shift 2 ;;
+    --help|-h) usage; exit 0 ;;
+    *) echo "Unknown argument: $1" >&2; usage >&2; exit 2 ;;
+  esac
+done
+
+if [[ ! "$database" =~ ^compat_[a-z0-9_]+$ ]]; then
+  echo "Refusing unsafe database name '$database'. Use a compat_* disposable database." >&2
   exit 2
 fi
 
-PSQL="${PSQL:-psql}"
-command -v "$PSQL" >/dev/null 2>&1 || { echo "psql not found" >&2; exit 2; }
+for tool in psql dropdb createdb; do
+  if ! command -v "$tool" >/dev/null 2>&1; then
+    echo "$tool was not found. Install PostgreSQL client tools." >&2
+    exit 127
+  fi
+done
 
-export PGPORT="$PORT" PGHOST="$PGHOST" PGUSER
-LOG="$(mktemp -t compat-db-test.XXXXXX.log)"
-SUCCEEDED=0
-
-dropdb --if-exists --force "$DATABASE" >/dev/null
-createdb "$DATABASE"
+tmp_dir="${TMPDIR:-/tmp}"
+mkdir -p "$tmp_dir"
+log="$(mktemp "$tmp_dir/compat-db-test-XXXXXX")"
+common=(-X -q -v ON_ERROR_STOP=1 -h "$host" -p "$port" -U "$user")
+completed=0
+created=0
 
 cleanup() {
-  if [[ "$KEEP" == "1" || "$SUCCEEDED" != "1" ]]; then
-    echo "Database '$DATABASE' kept for inspection (KEEP_DB=1 to silence)."
-    echo "Transcript: $LOG"
+  [[ "$created" -eq 1 ]] || return 0
+  if [[ "$completed" -eq 1 && "$keep" -eq 0 ]]; then
+    dropdb -h "$host" -p "$port" -U "$user" --if-exists --force "$database" >/dev/null 2>&1 || true
   else
-    dropdb --if-exists --force "$DATABASE" >/dev/null 2>&1 || true
+    echo "Database '$database' kept for inspection. Full transcript: $log"
   fi
 }
 trap cleanup EXIT
 
-# Runs psql against the disposable database. Returns psql's exit code.
-run_psql() {
-  local file="$1"
-  "$PSQL" -X -q -v ON_ERROR_STOP=1 -d "$DATABASE" -f "$file" >>"$LOG" 2>&1
-}
-
-require_file() {
-  local file="$1"
-  if ! run_psql "$file"; then
-    echo "--- output ($(basename "$file")) ---" >&2
-    tail -n 30 "$LOG" >&2
-    echo "SQL failed: ${file#"$ROOT/"}" >&2
+run_file() {
+  local path="$1"
+  local name
+  name="$(basename "$path")"
+  if ! psql "${common[@]}" -d "$database" -f "$path" >>"$log" 2>&1; then
+    echo
+    echo "--- output ($name) ---" >&2
+    tail -n 30 "$log" >&2
+    echo "SQL failed: ${path#"$repo_root"/}" >&2
     exit 1
   fi
 }
 
-echo "Rebuilding disposable database '$DATABASE' on $PGHOST:$PORT ..."
-require_file "$TEST_DIR/00_shim.sql"
+echo "Rebuilding disposable database '$database' on $host:$port ..."
+dropdb -h "$host" -p "$port" -U "$user" --if-exists --force "$database" >/dev/null 2>&1 || true
+createdb -h "$host" -p "$port" -U "$user" "$database"
+created=1
 
-for migration in "$ROOT"/supabase/migrations/*.sql; do
-  echo "  apply $(basename "$migration")"
-  require_file "$migration"
+run_file "$test_dir/00_shim.sql"
+
+migrations=()
+for migration_path in "$migration_dir"/*.sql; do
+  [[ -e "$migration_path" ]] || continue
+  migrations+=("$(basename "$migration_path")")
+done
+if [[ "${#migrations[@]}" -eq 0 ]]; then
+  echo "No migrations found." >&2
+  exit 1
+fi
+for migration in "${migrations[@]}"; do
+  echo "  apply $migration"
+  run_file "$migration_dir/$migration"
 done
 
 echo "  apply seed.sql"
-require_file "$ROOT/supabase/seed.sql"
-require_file "$TEST_DIR/01_setup.sql"
+run_file "$repo_root/supabase/seed.sql"
 
-failed=0
-tests=0
-for test in "$TEST_DIR"/*.sql; do
-  name="$(basename "$test")"
-  case "$name" in
+run_file "$test_dir/01_setup.sql"
+
+tests=()
+for test_path in "$test_dir"/[0-9][0-9]_*.sql; do
+  [[ -e "$test_path" ]] || continue
+  test_name="$(basename "$test_path")"
+  case "$test_name" in
     00_shim.sql|01_setup.sql) continue ;;
   esac
-  if [[ ! "$name" =~ ^[0-9]{2}_ ]]; then continue; fi
-  tests=$((tests + 1))
-  echo "  test  $name"
-  if run_psql "$test"; then
+  tests+=("$test_name")
+done
+if [[ "${#tests[@]}" -eq 0 ]]; then
+  echo "No tests found." >&2
+  exit 1
+fi
+
+failed=0
+for test in "${tests[@]}"; do
+  echo "  test  $test"
+  if psql "${common[@]}" -d "$database" -f "$test_dir/$test" >>"$log" 2>&1; then
     echo "        PASS"
   else
     failed=$((failed + 1))
     echo "        FAIL"
-    tail -n 20 "$LOG" | sed 's/^/        /' >&2
+    tail -n 30 "$log" | sed 's/^/        /'
   fi
 done
 
-if [[ "$failed" -ne 0 ]]; then
-  echo "$failed of $tests test file(s) failed." >&2
+if [[ "$failed" -gt 0 ]]; then
+  echo
+  echo "$failed test file(s) failed. Full transcript: $log" >&2
   exit 1
 fi
 
-SUCCEEDED=1
-echo "All $tests SQL test files passed."
+echo
+echo "All ${#tests[@]} SQL test files passed."
+completed=1

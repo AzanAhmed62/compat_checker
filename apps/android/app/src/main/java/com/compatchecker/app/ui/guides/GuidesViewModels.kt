@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 data class GuidesUiState(
     val guides: List<GuideSummary> = emptyList(),
     val loading: Boolean = true,
+    val offline: Boolean = false,
     val error: String? = null,
 )
 
@@ -30,7 +31,11 @@ class GuidesViewModel(private val guidesRepository: GuideRepository) : ViewModel
         viewModelScope.launch {
             _state.update { it.copy(loading = true, error = null) }
             runCatching { guidesRepository.guides() }
-                .onSuccess { guides -> _state.update { it.copy(guides = guides, loading = false) } }
+                .onSuccess { feed ->
+                    _state.update {
+                        it.copy(guides = feed.guides, offline = feed.offline, loading = false)
+                    }
+                }
                 .onFailure { error -> _state.update { it.copy(loading = false, error = error.displayMessage()) } }
         }
     }

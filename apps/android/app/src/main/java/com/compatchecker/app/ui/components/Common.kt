@@ -45,7 +45,6 @@ import com.compatchecker.app.R
 import com.compatchecker.app.domain.model.Evidence
 import com.compatchecker.app.domain.model.ProductSummary
 import com.compatchecker.app.ui.formatDate
-import com.compatchecker.app.ui.outcomeTitle
 import com.compatchecker.app.ui.relationshipLabel
 import com.compatchecker.app.ui.verificationLabel
 
@@ -206,7 +205,13 @@ fun OutcomeBadge(outcome: String, modifier: Modifier = Modifier) {
             .padding(horizontal = 12.dp, vertical = 5.dp),
     ) {
         Text(
-            outcomeTitle(outcome),
+            stringResource(
+                when (outcome) {
+                    "compatible" -> R.string.state_compatible
+                    "incompatible" -> R.string.state_incompatible
+                    else -> R.string.state_unknown
+                },
+            ),
             style = MaterialTheme.typography.labelLarge,
             color = colors.second,
             fontWeight = FontWeight.SemiBold,

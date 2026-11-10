@@ -35,6 +35,7 @@ import com.compatchecker.app.ui.compatViewModel
 import com.compatchecker.app.ui.components.DateText
 import com.compatchecker.app.ui.components.ErrorPane
 import com.compatchecker.app.ui.components.LoadingPane
+import com.compatchecker.app.ui.components.OfflineBanner
 import com.compatchecker.app.ui.components.SectionTitle
 import com.compatchecker.app.ui.difficultyLabel
 
@@ -76,6 +77,9 @@ fun GuideDetailScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
+                    if (guide.offline) {
+                        item { OfflineBanner() }
+                    }
                     item {
                         Text(guide.guide.title, style = MaterialTheme.typography.headlineSmall)
                         if (!guide.guide.summary.isNullOrBlank()) {
@@ -137,23 +141,6 @@ private fun StepCard(step: GuideStep) {
                 )
             }
             Text(step.body, style = MaterialTheme.typography.bodyMedium)
-        }
-    }
-}
-
-@Composable
-private fun MarkdownText(markdown: String) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        markdown.lines().forEach { raw ->
-            val line = raw.trim()
-            when {
-                line.isBlank() -> Unit
-                line.startsWith("### ") -> Text(line.removePrefix("### "), style = MaterialTheme.typography.titleSmall)
-                line.startsWith("## ") -> Text(line.removePrefix("## "), style = MaterialTheme.typography.titleMedium)
-                line.startsWith("# ") -> Text(line.removePrefix("# "), style = MaterialTheme.typography.titleLarge)
-                line.startsWith("- ") -> Text("• ${line.removePrefix("- ")}", style = MaterialTheme.typography.bodyMedium)
-                else -> Text(line, style = MaterialTheme.typography.bodyMedium)
-            }
         }
     }
 }

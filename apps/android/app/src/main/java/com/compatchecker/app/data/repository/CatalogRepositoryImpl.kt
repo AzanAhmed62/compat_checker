@@ -31,14 +31,16 @@ class CatalogRepositoryImpl(
     override suspend fun search(
         query: String,
         categorySlug: String?,
+        brandSlug: String?,
         limit: Int,
         offset: Int,
     ): SearchPage {
-        val remote = gateway ?: return cachedSearch(query, categorySlug, limit, offset)
+        val remote = gateway ?: return cachedSearch(query, categorySlug, brandSlug, limit, offset)
         return try {
             val parameters = buildJsonObject {
                 put("p_query", query.trim())
                 if (categorySlug != null) put("p_category", categorySlug)
+                if (brandSlug != null) put("p_brand", brandSlug)
                 put("p_limit", limit)
                 put("p_offset", offset)
             }
@@ -52,7 +54,7 @@ class CatalogRepositoryImpl(
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (error: Throwable) {
-            cachedSearch(query, categorySlug, limit, offset)
+            cachedSearch(query, categorySlug, brandSlug, limit, offset)
         }
     }
 
@@ -111,6 +113,7 @@ class CatalogRepositoryImpl(
         return runCatching {
             gateway?.json?.decodeFromString(ProductDetailDto.serializer(), cached.payload)
                 ?.toDomain(::urlFor)
+                ?.copy(offline = true)
         }.getOrNull()
     }
 
@@ -134,6 +137,7 @@ class CatalogRepositoryImpl(
     private suspend fun cachedSearch(
         query: String,
         categorySlug: String?,
+        brandSlug: String?,
         limit: Int,
         offset: Int,
     ): SearchPage {
@@ -141,6 +145,7 @@ class CatalogRepositoryImpl(
         val matching = dao.allProducts()
             .asSequence()
             .filter { categorySlug == null || it.categorySlug == categorySlug }
+            .filter { brandSlug == null || it.brandSlug == brandSlug }
             .filter {
                 term.isBlank() ||
                     it.name.lowercase().contains(term) ||
@@ -156,6 +161,7 @@ class CatalogRepositoryImpl(
                 name = cached.name,
                 modelNumber = cached.modelNumber,
                 brandName = cached.brandName,
+                brandSlug = cached.brandSlug,
                 categoryName = cached.categoryName,
                 categorySlug = cached.categorySlug,
                 summary = cached.summary,
@@ -173,6 +179,7 @@ class CatalogRepositoryImpl(
         id = id,
         name = name,
         brandName = brandName,
+        brandSlug = brandSlug,
         categoryName = categoryName,
         categorySlug = categorySlug,
         modelNumber = modelNumber,
@@ -187,6 +194,6 @@ class CatalogRepositoryImpl(
     }
 }
 
-class OfflineCacheMissException : IllegalStateException(
-    "You are offline and no saved catalog results are available yet.",
-)
+class OfflineCacheMissException(
+    message: String = "You are offline and no saved catalog results are available yet.",
+) : IllegalStateException(message)

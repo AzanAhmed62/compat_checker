@@ -46,7 +46,8 @@ A pairwise check never uses transitive rules or graph inference. The graph endpo
 - Compare any two published products and inspect evidence.
 - Read published rules, evidence, guides, and public requests.
 - Read visible comments and aggregate vote counts.
-- Open product, guide, and checker deep links.
+- Open public collections and public member profiles with aggregate reputation, follower, and contribution counts.
+- Open product, guide, checker, collection, and profile deep links.
 
 ### Authenticated member
 
@@ -56,6 +57,8 @@ A pairwise check never uses transitive rules or graph inference. The graph endpo
 - Post comments on products, rules, and guides.
 - Submit structured product-edit contributions with a JSON patch and withdraw pending contributions.
 - Submit reports for spam, harassment, false claims, unsafe advice, copyright, or other reasons.
+- Create public or private collections, add and remove published products, change visibility, and delete owned collections.
+- Follow and unfollow other active members; view the reputation leaderboard.
 - View reputation points/tier, ledger-derived contribution history, notifications, and account state.
 - Request account deletion with a 30-day delayed purge, or cancel while pending.
 
@@ -79,10 +82,18 @@ Role or status changes are validated and recorded server-side. The Android clien
 - English and Urdu resources with RTL support and in-app language selection via AppCompat per-app locales.
 - Bottom navigation for Browse, Checker, Guides, Requests, and Profile.
 - Loading, empty, offline, and error states with retry.
-- Offline catalog cache for previously loaded products and details.
+- Offline cache for previously loaded catalog results, product details, guide
+  lists, and guide details.
+- Guide bodies rendered as a safe Markdown subset: headings, paragraphs, lists,
+  quotes, fenced code, bold, italic, inline code, and absolute HTTP(S) links.
+  Raw HTML is displayed as text.
 - Explicit "unknown" and "incompatible" states; no green compatibility styling for unknown.
 - Accessible touch targets, content descriptions, and scalable text.
-- Deep links: `compatchecker://product/{id}`, `compatchecker://checker`, `compatchecker://guide/{id}`.
+- Deep links: `compatchecker://product/{id}`, `compatchecker://checker`,
+  `compatchecker://guide/{id}`, `compatchecker://rule/{id}`,
+  `compatchecker://collection/{id}`, `compatchecker://profile/{id}`.
+- Notification links route to products, guides, rules, profiles, and
+  collections; unsupported or malformed links show a visible message.
 
 ## Out of scope
 

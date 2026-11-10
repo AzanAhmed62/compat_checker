@@ -34,6 +34,11 @@
   <string name="action_view_all">سب دیکھیں</string>
   <string name="action_report">رپورٹ</string>
   <string name="action_new_request">نئی درخواست</string>
+  <string name="action_create">بنائیں</string>
+  <string name="action_close">بند کریں</string>
+  <string name="action_delete">حذف کریں</string>
+  <string name="action_follow">فالو کریں</string>
+  <string name="action_unfollow">فالو ہٹائیں</string>
 
   <string name="state_loading">لوڈ ہو رہا ہے…</string>
   <string name="state_no_results">کوئی نتیجہ نہیں</string>
@@ -57,6 +62,7 @@
   <string name="section_specifications">تفصیلات</string>
   <string name="section_aliases">دیگر نام</string>
   <string name="section_compatibility">مطابقت</string>
+  <string name="section_products">مصنوعات</string>
   <string name="section_guides">رہنما</string>
   <string name="section_comments">تبادلۂ خیال</string>
   <string name="section_evidence">شواہد</string>
@@ -116,7 +122,9 @@
   <string name="profile_guest_title">آپ کا اکاؤنٹ</string>
   <string name="profile_guest_body">عوامی براؤزنگ بغیر اکاؤنٹ کے ممکن ہے۔ پسندیدہ، ووٹ، تبصرے، درخواستیں، تعاون اور اطلاعات کے لیے سائن ان کریں۔</string>
   <string name="profile_favorites">پسندیدہ</string>
+  <string name="profile_collections">مجموعے</string>
   <string name="profile_contributions">تعاون</string>
+  <string name="profile_leaderboard">کمیونٹی لیڈر بورڈ</string>
   <string name="profile_notifications">اطلاعات</string>
   <string name="profile_settings">ترتیبات</string>
   <string name="favorites_title">پسندیدہ</string>
@@ -124,6 +132,60 @@
   <string name="contributions_title">میرے تعاون</string>
   <string name="notifications_title">اطلاعات</string>
   <string name="notifications_empty">ابھی کوئی اطلاع نہیں۔</string>
+  <string name="notification_link_unavailable">اس اطلاع کا لنک اس ایپ ورژن میں معاون نہیں۔</string>
+
+  <string name="collections_title">مجموعے</string>
+  <string name="collections_subtitle">مصنوعات کو عوامی یا نجی مجموعوں میں رکھیں۔ نجی مجموعے صرف آپ کو نظر آتے ہیں۔</string>
+  <string name="collections_empty">ابھی کوئی مجموعہ نہیں۔ مصنوعات منظم کرنے کے لیے ایک بنائیں۔</string>
+  <string name="collection_new">نیا مجموعہ</string>
+  <string name="collection_title">مجموعہ</string>
+  <string name="collection_create_title">مجموعہ بنائیں</string>
+  <string name="collection_title_label">عنوان</string>
+  <string name="collection_description_label">تفصیل (اختیاری)</string>
+  <string name="collection_public_label">عوامی مجموعہ</string>
+  <string name="collection_public_help">عوامی مجموعے سب دیکھ سکتے ہیں۔ نجی مجموعے صرف آپ کو نظر آتے ہیں۔</string>
+  <string name="collection_private">نجی</string>
+  <string name="collection_public">عوامی</string>
+  <plurals name="collection_items">
+    <item quantity="one">%1$d شے</item>
+    <item quantity="other">%1$d اشیاء</item>
+  </plurals>
+  <string name="collection_updated">آخری تبدیلی %1$s</string>
+  <string name="collection_owner">از %1$s</string>
+  <string name="collection_added_on">شامل کیا گیا %1$s</string>
+  <string name="collection_empty_items">اس مجموعے میں ابھی کوئی شائع شدہ مصنوع نہیں۔</string>
+  <string name="collection_not_found">مجموعہ نہیں ملا یا نظر نہیں آتا۔</string>
+  <string name="collection_make_public">اس مجموعے کو عوامی بنائیں</string>
+  <string name="collection_make_private">اس مجموعے کو نجی بنائیں</string>
+  <string name="collection_remove_item">مجموعے سے ہٹائیں</string>
+  <string name="collection_item_removed">مجموعے سے ہٹا دیا گیا</string>
+  <string name="collection_delete_title">مجموعہ حذف کریں</string>
+  <string name="collection_delete_body">یہ مجموعہ حذف کریں؟ مصنوعات خود حذف نہیں ہوں گی۔</string>
+  <string name="collection_deleted">مجموعہ حذف ہو گیا</string>
+  <string name="add_to_collection_title">مجموعے میں شامل کریں</string>
+  <string name="add_to_collection_choose">مجموعہ منتخب کریں</string>
+  <string name="add_to_collection_empty">ابھی آپ کا کوئی مجموعہ نہیں۔ نیچے ایک بنائیں۔</string>
+  <string name="add_to_collection_new">نئے مجموعے کا عنوان</string>
+  <string name="add_to_collection_create">بنائیں اور شامل کریں</string>
+  <string name="add_to_collection_manage">مجموعے منظم کریں</string>
+  <string name="add_to_collection_added">مجموعے میں شامل ہو گیا</string>
+
+  <string name="public_profile_title">ممبر پروفائل</string>
+  <string name="profile_not_found">پروفائل نہیں ملا۔</string>
+  <string name="profile_followers">فالوورز</string>
+  <string name="profile_following">فالو کر رہے ہیں</string>
+  <string name="profile_approved_contributions">منظور شدہ</string>
+  <string name="profile_published_rules">%1$d شائع شدہ قواعد</string>
+  <string name="profile_recent_contributions">حالیہ منظور شدہ تعاون</string>
+  <string name="profile_no_recent_contributions">ابھی کوئی منظور شدہ تعاون نہیں۔</string>
+  <string name="profile_self">یہ آپ کا عوامی پروفائل ہے۔</string>
+  <string name="profile_follow_sign_in">فالو کرنے کے لیے سائن ان کریں</string>
+
+  <string name="leaderboard_title">کمیونٹی لیڈر بورڈ</string>
+  <string name="leaderboard_subtitle">ساکھ صرف منظور شدہ تعاون اور شائع شدہ قواعد سے بنتی ہے۔</string>
+  <string name="leaderboard_empty">ابھی کوئی درجہ بند تعاون کنندہ نہیں۔</string>
+  <string name="leaderboard_rank">#%1$d</string>
+  <string name="leaderboard_stats">%1$d پوائنٹس · %2$d منظور شدہ</string>
   <string name="settings_title">ترتیبات</string>
   <string name="settings_appearance">ظاہری شکل</string>
   <string name="settings_theme_system">سسٹم</string>

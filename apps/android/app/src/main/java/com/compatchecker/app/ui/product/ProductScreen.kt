@@ -56,16 +56,20 @@ import com.compatchecker.app.domain.repository.AuthRepository
 import com.compatchecker.app.domain.repository.CatalogRepository
 import com.compatchecker.app.domain.repository.CommunityRepository
 import com.compatchecker.app.domain.repository.ProfileRepository
+import com.compatchecker.app.domain.repository.SocialRepository
 import com.compatchecker.app.ui.compatViewModel
 import com.compatchecker.app.ui.components.EmptyPane
 import com.compatchecker.app.ui.components.ErrorPane
 import com.compatchecker.app.ui.components.LoadingPane
 import com.compatchecker.app.ui.components.MetaDivider
+import com.compatchecker.app.ui.components.OfflineBanner
 import com.compatchecker.app.ui.components.RelationshipBadge
 import com.compatchecker.app.ui.components.SectionTitle
 import com.compatchecker.app.ui.components.VerificationChip
+import com.compatchecker.app.ui.social.AddToCollectionDialog
 import com.compatchecker.app.ui.formatDate as formatDateValue
 import com.compatchecker.app.ui.statusLabel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -75,11 +79,14 @@ fun ProductScreen(
     community: CommunityRepository,
     profiles: ProfileRepository,
     auth: AuthRepository,
+    social: SocialRepository,
+    signedIn: Boolean,
     onBack: () -> Unit,
     onAuthRequired: () -> Unit,
     onRuleClick: (String) -> Unit,
     onGuideClick: (String) -> Unit,
     onCompare: (String) -> Unit,
+    onOpenCollections: () -> Unit,
 ) {
     val viewModel: ProductViewModel = compatViewModel {
         ProductViewModel(productId, catalog, community, profiles, auth)
@@ -90,6 +97,8 @@ fun ProductScreen(
     var menuOpen by remember { mutableStateOf(false) }
     var showReport by remember { mutableStateOf(false) }
     var showCorrection by remember { mutableStateOf(false) }
+    var showAddToCollection by remember { mutableStateOf(false) }
+    val addedToCollectionMessage = stringResource(R.string.add_to_collection_added)
 
     LaunchedEffect(state.message) {
         state.message?.let {
@@ -141,6 +150,17 @@ fun ProductScreen(
                                 },
                             )
                             DropdownMenuItem(
+                                text = { Text(stringResource(R.string.add_to_collection_title)) },
+                                onClick = {
+                                    menuOpen = false
+                                    if (signedIn) {
+                                        showAddToCollection = true
+                                    } else {
+                                        onAuthRequired()
+                                    }
+                                },
+                            )
+                            DropdownMenuItem(
                                 text = { Text(stringResource(R.string.section_correction)) },
                                 onClick = {
                                     menuOpen = false
@@ -171,6 +191,9 @@ fun ProductScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
+                    if (product.offline) {
+                        item { OfflineBanner() }
+                    }
                     item { ProductHeader(product) }
                     item {
                         Button(
@@ -275,6 +298,21 @@ fun ProductScreen(
             busy = state.correctionBusy,
             onDismiss = { showCorrection = false },
             onSubmit = viewModel::submitCorrection,
+        )
+    }
+    if (showAddToCollection) {
+        AddToCollectionDialog(
+            social = social,
+            productId = productId,
+            onDismiss = { showAddToCollection = false },
+            onAdded = {
+                showAddToCollection = false
+                scope.launch { snackbar.showSnackbar(addedToCollectionMessage) }
+            },
+            onManageCollections = {
+                showAddToCollection = false
+                onOpenCollections()
+            },
         )
     }
 }

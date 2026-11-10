@@ -12,6 +12,7 @@ import com.compatchecker.app.data.repository.CommunityRepositoryImpl
 import com.compatchecker.app.data.repository.CompatibilityRepositoryImpl
 import com.compatchecker.app.data.repository.GuideRepositoryImpl
 import com.compatchecker.app.data.repository.ProfileRepositoryImpl
+import com.compatchecker.app.data.repository.SocialRepositoryImpl
 import com.compatchecker.app.domain.repository.AuthRepository
 import com.compatchecker.app.domain.repository.CatalogRepository
 import com.compatchecker.app.domain.repository.CommunityRepository
@@ -19,6 +20,7 @@ import com.compatchecker.app.domain.repository.CompatibilityRepository
 import com.compatchecker.app.domain.repository.GuideRepository
 import com.compatchecker.app.domain.repository.PreferencesRepository
 import com.compatchecker.app.domain.repository.ProfileRepository
+import com.compatchecker.app.domain.repository.SocialRepository
 
 interface AppContainer {
     val config: AppConfig
@@ -28,6 +30,7 @@ interface AppContainer {
     val guideRepository: GuideRepository
     val communityRepository: CommunityRepository
     val profileRepository: ProfileRepository
+    val socialRepository: SocialRepository
     val preferencesRepository: PreferencesRepository
 }
 
@@ -39,7 +42,7 @@ class AppContainerImpl(context: Context) : AppContainer {
 
     private val database: CompatDatabase by lazy {
         Room.databaseBuilder(context, CompatDatabase::class.java, "compat-checker.db")
-            .fallbackToDestructiveMigration(dropAllTables = true)
+            .addMigrations(CompatDatabase.MIGRATION_1_2)
             .build()
     }
 
@@ -50,11 +53,14 @@ class AppContainerImpl(context: Context) : AppContainer {
     override val compatibilityRepository: CompatibilityRepository by lazy {
         CompatibilityRepositoryImpl(gateway)
     }
-    override val guideRepository: GuideRepository by lazy { GuideRepositoryImpl(gateway) }
+    override val guideRepository: GuideRepository by lazy {
+        GuideRepositoryImpl(gateway, database.catalogDao())
+    }
     override val communityRepository: CommunityRepository by lazy {
         CommunityRepositoryImpl(gateway)
     }
     override val profileRepository: ProfileRepository by lazy { ProfileRepositoryImpl(gateway) }
+    override val socialRepository: SocialRepository by lazy { SocialRepositoryImpl(gateway) }
     override val preferencesRepository: PreferencesRepository by lazy {
         PreferencesRepositoryImpl(context.applicationContext)
     }
