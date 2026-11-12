@@ -44,7 +44,7 @@ Plain-PostgreSQL/RLS verification (Linux/macOS, requires PostgreSQL client
 tools and a reachable disposable database; it does not start a server):
 
 ```bash
-PGPASSWORD=postgres PGUSER=supabase_admin PGPORT=55432 ./scripts/db_test.sh --keep
+PGPASSWORD=postgres PGUSER=postgres PGPORT=55322 ./scripts/db_test.sh --keep
 ```
 
 Windows:
@@ -128,49 +128,57 @@ Deep links:
 - `compatchecker://collection/{id}`
 - `compatchecker://profile/{id}`
 
-Version `1.1.0` adds:
+Version `1.2.0` adds:
 
-- Public and private collections with product add/remove and visibility changes.
-- Follow/unfollow, public profile aggregates, and a reputation leaderboard.
-- Brand filters in catalog search and a retry action.
-- Offline caching for guide lists and guide details (Room schema version 2).
-- A small, safe Markdown renderer for guide bodies (raw HTML stays text;
-  only absolute HTTP(S) links are clickable).
-- Notification routing for product, guide, rule, profile, and collection links,
-  with a visible message for unsupported or malformed links.
+- Atomic admin saves for products, guides, and rules/evidence through
+  server-authorized RPCs, with server-side ownership and canonical relationship
+  handling.
+- Exactly one final rule version per admin update, versioning for direct
+  published-evidence edits, and rollback that restores the exact snapshot
+  evidence set.
+- A required change reason for rule updates in the admin console.
+- Android contribution forms for new products, new rules, evidence, and
+  guides, with validated payload builders and English/Urdu labels.
+- Localized enum/status/relationship/difficulty labels and remaining hardcoded
+  Android UI strings.
+- Eight HTTP-level Edge Function tests covering CORS, methods, JSON, CSV, and
+  cron authorization over real localhost requests.
+- CI updates for the HTTP test file and network permission.
 
 ## Verification status
 
-Observed in this workspace on 2026-11-09:
+Observed in this workspace on 2026-11-12 for the v1.2 source:
 
-- Database: **7 SQL/RLS test files passed** with the plain-PostgreSQL runner
-  after all **12 migrations** and the updated seed.
-- Full local Supabase stack: **started and reset successfully** with the pinned
-  `public.ecr.aws/supabase/postgres:17.11.0.011` image and the isolated ports
-  in `supabase/config.toml`. Auth health and password sign-in returned 200;
-  public views, RLS denials, collection/follow lifecycles, evidence URL
-  validation, vote privacy, and admin-only RPCs were exercised over HTTP.
-  Storage object upload/read/delete policies were exercised by role; live Edge
-  Function invocation was not.
+- Database: **8 SQL/RLS test files passed** with the plain-PostgreSQL runner
+  after all **13 migrations** and the updated seed. The live local stack was
+  reset twice; the final state had 7 products, 5 rules, 1 guide, and 4 profiles.
 - Admin: TypeScript typecheck passed; **15 Vitest tests passed in 3 files**;
-  production build transformed 181 modules (498.34 kB JS, 142.18 kB gzip;
-  16.84 kB CSS). Sign-in, dashboard, catalog, and users pages were exercised
-  against the live local stack in a browser with no console errors. The public
-  `/privacy` and `/delete-account` pages still have no deployed-backend test.
-- Android: `:app:assembleDebug`, `:app:assembleDebugAndroidTest`, and
-  **17 JVM tests in 6 test classes** passed with no failures. On 2026-11-10
-  the connected suite passed **5/5** on a physical OnePlus 6T (Android 11),
-  including the Room 1-to-2 migration. Live smoke testing against the local
-  API covered catalog, product detail, auth, collections, follows, leaderboard,
-  notifications, guides, offline cache, deep links, themes, and Urdu/RTL.
-  Favorites/votes/comments/request/contribution mutations, account deletion,
-  session expiry, 200% font scale, and TalkBack remain unverified. This is not
-  a release validation.
-- Edge Functions: Deno typecheck passed; **24 handler tests passed** with 0
-  failures. No hosted function, real admin JWT/database RPC, or scheduler
-  invocation has been tested.
-- CI has database, admin, Edge Function, and Android jobs. It has not run on
-  GitHub Actions.
+  the production build passed. The browser sweep against the live local database
+  covered atomic product, guide, and rule/evidence saves, change reasons,
+  version counts, rollback, reports, contributions, comments, requests,
+  users/roles/status and suspended-session denial, media, CSV export/import and
+  rollback, analytics, audit filtering, pagination, and route gating with no
+  unexpected console errors.
+- Android: `:app:assembleDebug`, `:app:testDebugUnitTest`, and
+  `:app:assembleDebugAndroidTest` passed; **28 JVM tests in 7 test classes**
+  passed with no failures. Version is `1.2.0` (version code 3). The v1.2
+  connected suite passed **5/5** on a physical OnePlus A6010 (Android 11) on
+  2026-11-12.
+- Edge Functions: Deno typecheck passed; **32 tests passed** with 0 failures,
+  including eight HTTP-level tests over ephemeral localhost servers with
+  injected auth/database fakes. Live local invocation with the real Edge
+  Runtime, admin JWT, and database covered CORS, CSV export, cron-secret
+  enforcement, and an account purge. No hosted function, scheduler, or
+  production deployment has been tested.
+- Full local Supabase stack (2026-11-12): reset with the pinned
+  `public.ecr.aws/supabase/postgres:17.11.0.011` image. Auth health and password
+  sign-in returned 200; public views, RLS denials, social lifecycles, evidence
+  URL validation, vote privacy, admin-only RPCs, Storage object policies, live
+  Edge HTTP invocation, and the full admin browser sweep were exercised. Hosted
+  deployment remains unverified.
+- CI has database, admin, Edge Function, and Android jobs. The workflow
+  succeeded on GitHub Actions at commit `58d30cc`; the local v1.2 commit has not
+  run remotely.
 - No remote Supabase project, Play signing key, or Play Console access has been
   used.
 
@@ -189,6 +197,7 @@ Remaining release gaps are tracked in [`docs/KNOWN_ISSUES.md`](docs/KNOWN_ISSUES
 - [Roadmap](docs/ROADMAP.md)
 - [Known issues](docs/KNOWN_ISSUES.md)
 - [v1.1 implementation report](docs/V1_1_IMPLEMENTATION_REPORT.md)
+- [v1.2 implementation report](docs/V1_2_IMPLEMENTATION_REPORT.md)
 - [Next task](NEXT_TASK.md)
 
 ## License and data

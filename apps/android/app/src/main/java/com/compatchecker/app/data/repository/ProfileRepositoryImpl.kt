@@ -53,20 +53,25 @@ class ProfileRepositoryImpl(private val gateway: SupabaseGateway?) : ProfileRepo
         return result.items.map(ContributionDto::toDomain)
     }
 
-    override suspend fun submitProductCorrection(productId: String, patch: JsonObject): String {
+    override suspend fun submitContribution(kind: String, payload: JsonObject): String {
         val remote = requireGateway()
-        val payload = buildJsonObject {
-            put("product_id", productId)
-            put("patch", patch)
-        }
         return remote.client.postgrest.rpc(
             "submit_contribution",
             buildJsonObject {
-                put("p_kind", "product_edit")
+                put("p_kind", kind)
                 put("p_payload", payload)
             },
         ).decodeAs<String>()
     }
+
+    override suspend fun submitProductCorrection(productId: String, patch: JsonObject): String =
+        submitContribution(
+            "product_edit",
+            buildJsonObject {
+                put("product_id", productId)
+                put("patch", patch)
+            },
+        )
 
     override suspend fun notifications(): List<AppNotification> {
         val remote = requireGateway()

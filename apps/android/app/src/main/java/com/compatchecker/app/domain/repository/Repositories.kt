@@ -92,6 +92,7 @@ interface ProfileRepository {
     suspend fun updateProfile(displayName: String?, bio: String?, locale: String?): UserProfile
     suspend fun reputation(): Reputation
     suspend fun contributions(): List<Contribution>
+    suspend fun submitContribution(kind: String, payload: JsonObject): String
     suspend fun submitProductCorrection(productId: String, patch: JsonObject): String
     suspend fun notifications(): List<AppNotification>
     suspend fun markNotificationRead(id: String)

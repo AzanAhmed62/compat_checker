@@ -1,6 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '../auth/AuthProvider';
 import { Modal } from '../components/Modal';
 import { Pagination } from '../components/Pagination';
 import {
@@ -79,7 +78,6 @@ const emptyRule: RuleInput = {
 };
 
 export function RulesPage() {
-  const { me } = useAuth();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState('');
@@ -241,7 +239,6 @@ export function RulesPage() {
         <RuleEditor
           rule={editor.rule}
           products={products.data ?? []}
-          actorId={me?.id ?? ''}
           onClose={() => setEditor(null)}
           onSaved={() => void saved()}
         />
@@ -276,13 +273,11 @@ function makeEvidenceRow(partial?: Partial<EvidenceInput>): EvidenceRow {
 function RuleEditor({
   rule,
   products,
-  actorId,
   onClose,
   onSaved,
 }: {
   rule?: RuleWithMeta;
   products: Array<{ id: string; name: string; slug: string; status: string }>;
-  actorId: string;
   onClose(): void;
   onSaved(): void;
 }) {
@@ -308,9 +303,13 @@ function RuleEditor({
       : { ...emptyRule },
   );
   const [evidence, setEvidence] = useState<EvidenceRow[]>([makeEvidenceRow()]);
+  const [reason, setReason] = useState('');
   const [error, setError] = useState<string | null>(null);
   const save = useMutation({
     mutationFn: async () => {
+      if (rule && reason.trim().length < 5) {
+        throw new Error('Record a change reason of at least 5 characters');
+      }
       if (!form.subject_product_id || !form.object_product_id) {
         throw new Error('Choose both products');
       }
@@ -349,7 +348,7 @@ function RuleEditor({
           excerpt: item.excerpt?.trim() || null,
           captured_at: item.captured_at || null,
         })),
-        actorId,
+        reason.trim() || null,
         rule?.id,
       );
     },
@@ -547,6 +546,19 @@ function RuleEditor({
               setForm({ ...form, required_modifications: event.target.value })
             }
           />
+        </label>
+
+        <label className="form-span">
+          Change reason {rule ? '(required)' : '(optional)'}
+          <input
+            maxLength={300}
+            value={reason}
+            placeholder="Why this compatibility claim or citation set changed"
+            onChange={(event) => setReason(event.target.value)}
+          />
+          <span className="muted small">
+            Stored on the new version so reviewers can understand the edit.
+          </span>
         </label>
 
         <fieldset className="form-span fieldset">

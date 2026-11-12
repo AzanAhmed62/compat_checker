@@ -50,7 +50,9 @@ Risk: `none`, `low`, `moderate`, `high`, `critical`.
 
 **Outcome invariant:** exact-pair published rules only. Any `not_compatible_with` wins. No rules means `unknown`.
 
-Rule edits create version history. Deletion is represented as retirement; `admin_rollback_rule` restores a prior version while preserving audit records.
+Rule edits create version history. An atomic admin save writes exactly one version containing the final evidence set; intermediate rows from the replacement are suppressed. Editing evidence directly on a published rule also creates a version, while draft evidence edits do not. Deletion is represented as retirement. `admin_rollback_rule` restores the exact evidence set recorded for a prior version and writes a new version instead of rewriting history.
+
+Admin writes for products, guides, and rules use `admin_save_product`, `admin_save_guide`, and `admin_save_rule`. Each validates the acting admin, replaces child rows in one transaction, and relies on the database for canonical symmetric orientation and evidence-rule immutability.
 
 ## Community
 
@@ -104,7 +106,8 @@ follow/unfollow, request creation/voting, comments, reports, contributions,
 notification reads, profile update, reputation, and account deletion
 request/cancel. Admin functions cover dashboard, users, roles/status,
 moderation, contributions, requests, rules/versions/rollback, CSV import, and
-analytics.
+analytics. Atomic save functions are `admin_save_product`, `admin_save_guide`,
+and `admin_save_rule`.
 
 ## Storage
 

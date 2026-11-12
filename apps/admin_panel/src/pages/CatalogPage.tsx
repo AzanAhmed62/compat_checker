@@ -1,6 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '../auth/AuthProvider';
 import { Modal } from '../components/Modal';
 import { Pagination } from '../components/Pagination';
 import {
@@ -44,7 +43,6 @@ const emptyForm = {
 };
 
 export function CatalogPage() {
-  const { me } = useAuth();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
   const [queryText, setQueryText] = useState('');
@@ -201,7 +199,6 @@ export function CatalogPage() {
       {editor ? (
         <ProductEditor
           id={editor.id}
-          actorId={me?.id ?? ''}
           brands={brands.data ?? []}
           categories={categories.data ?? []}
           onClose={() => setEditor(null)}
@@ -250,14 +247,12 @@ export function CatalogPage() {
 
 function ProductEditor({
   id,
-  actorId,
   brands,
   categories,
   onClose,
   onSaved,
 }: {
   id?: string;
-  actorId: string;
   brands: Brand[];
   categories: Category[];
   onClose(): void;
@@ -308,7 +303,6 @@ function ProductEditor({
             sort_order: 0,
           })),
         },
-        actorId,
         id,
       );
     },

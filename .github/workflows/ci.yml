@@ -75,8 +75,9 @@ jobs:
           supabase/functions/tests/auth_test.ts
           supabase/functions/tests/admin_csv_test.ts
           supabase/functions/tests/purge_test.ts
+          supabase/functions/tests/http_test.ts
       - name: Run Edge Function tests
-        run: deno test --allow-env supabase/functions/tests
+        run: deno test --allow-env --allow-net supabase/functions/tests
 
   android:
     name: Android build and unit tests

@@ -1,6 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '../auth/AuthProvider';
 import { Modal } from '../components/Modal';
 import { Pagination } from '../components/Pagination';
 import {
@@ -31,7 +30,6 @@ interface StepDraft {
 }
 
 export function GuidesPage() {
-  const { me } = useAuth();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
   const [status, setStatus] = useState<GuideStatus | ''>('');
@@ -153,7 +151,6 @@ export function GuidesPage() {
       {editor ? (
         <GuideEditor
           id={editor.id}
-          actorId={me?.id ?? ''}
           products={(products.data ?? []).filter((product) => product.status === 'published')}
           onClose={() => setEditor(null)}
           onSaved={() => void saved()}
@@ -165,13 +162,11 @@ export function GuidesPage() {
 
 function GuideEditor({
   id,
-  actorId,
   products,
   onClose,
   onSaved,
 }: {
   id?: string;
-  actorId: string;
   products: Array<{ id: string; name: string }>;
   onClose(): void;
   onSaved(): void;
@@ -217,7 +212,6 @@ function GuideEditor({
           body: step.body.trim(),
           image_path: step.image_path.trim() || null,
         })),
-        actorId,
         id,
       );
     },

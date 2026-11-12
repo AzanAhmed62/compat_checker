@@ -7,7 +7,7 @@ This document describes deployment preparation. No remote Supabase project, Play
 - Node.js 22+ and npm
 - JDK 17+ (JDK 21 verified locally)
 - Android SDK platform 36 and build-tools 36.x
-- Docker engine and Supabase CLI for the full local stack (Auth/PostgREST/RLS and Storage object policies verified locally on 2026-11-09; live Edge Function invocation still pending)
+- Docker engine and Supabase CLI for the full local stack (Auth/PostgREST/RLS and Storage object policies verified locally on 2026-11-09 under v1.1; live Edge Function invocation still pending)
 - Deno 2.x for Edge Function typechecking and tests
 - PostgreSQL client tools and a disposable server for the plain-PostgreSQL test runner
 - An authorized Supabase project for remote deployment
@@ -26,7 +26,7 @@ supabase db reset
 Plain-PostgreSQL SQL/RLS verification in this workspace (Linux/macOS):
 
 ```bash
-PGPASSWORD=postgres PGUSER=supabase_admin PGPORT=55432 ./scripts/db_test.sh --keep
+PGPASSWORD=postgres PGUSER=postgres PGPORT=55322 ./scripts/db_test.sh --keep
 ```
 
 Windows: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/db_test.ps1 -Keep`.
@@ -80,11 +80,11 @@ supabase functions deploy purge-pending-accounts --no-verify-jwt
 Local typecheck and tests do not need a Supabase project:
 
 ```powershell
-deno check supabase/functions/_shared/auth.ts supabase/functions/admin-csv/index.ts supabase/functions/admin-csv/handler.ts supabase/functions/purge-pending-accounts/index.ts supabase/functions/purge-pending-accounts/handler.ts supabase/functions/tests/auth_test.ts supabase/functions/tests/admin_csv_test.ts supabase/functions/tests/purge_test.ts
-deno test --allow-env supabase/functions/tests
+deno check supabase/functions/_shared/auth.ts supabase/functions/admin-csv/index.ts supabase/functions/admin-csv/handler.ts supabase/functions/purge-pending-accounts/index.ts supabase/functions/purge-pending-accounts/handler.ts supabase/functions/tests/auth_test.ts supabase/functions/tests/admin_csv_test.ts supabase/functions/tests/purge_test.ts supabase/functions/tests/http_test.ts
+deno test --allow-env --allow-net supabase/functions/tests
 ```
 
-These cover handler behavior, CORS/origin rejection, auth failure mapping, CSV limits and formula neutralization, purge secrets, and bounded service-role invocations. They do not replace a live-stack test with a real admin JWT and database.
+These cover handler behavior, CORS/origin rejection, auth failure mapping, CSV limits and formula neutralization, purge secrets, bounded service-role invocations, and HTTP-level request handling on ephemeral localhost ports. They do not replace a live-stack test with a real admin JWT and database.
 
 Configure secrets:
 
@@ -157,4 +157,4 @@ Release builds require signing values and fail fast without them. See `docs/PLAY
 
 ## Known environment limitations
 
-Docker, the Supabase CLI, and Deno are available in this workspace. The pinned local Supabase stack was started and reset on 2026-11-09, and Auth/PostgREST/RLS, Storage object policies, and the admin console were exercised over HTTP. Live Edge Function invocation and a production deployment were not. Edge Function typechecking and 24 handler tests pass, and instrumented Compose tests are compiled but have not run without a usable emulator/device. Do not treat local results as production release validation.
+Docker, the Supabase CLI, and Deno are available in this workspace. The pinned local Supabase stack was reset on 2026-11-12 with all 13 migrations and the seed, and Auth/PostgREST/RLS, Storage object policies, atomic admin saves in the browser, and live local Edge Function HTTP invocation were exercised. A production deployment and hosted Edge Runtime were not. For v1.2, Deno typechecking and 32 tests pass locally (including eight HTTP-level tests with injected clients), the SQL suite has 8 passing files, the admin/Android builds pass, the v1.2 connected suite passed 5/5 on a physical device, and the admin atomic workflows passed in the browser. Do not treat local results as production release validation.

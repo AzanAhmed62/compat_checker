@@ -343,10 +343,10 @@ private fun ProductHeader(product: ProductDetail) {
             Text(product.technicalNotes, style = MaterialTheme.typography.bodyMedium)
         }
         product.connectorType?.let {
-            Text("Connector: $it", style = MaterialTheme.typography.bodySmall)
+            Text(stringResource(R.string.product_connector, it), style = MaterialTheme.typography.bodySmall)
         }
         product.formFactor?.let {
-            Text("Form factor: $it", style = MaterialTheme.typography.bodySmall)
+            Text(stringResource(R.string.product_form_factor, it), style = MaterialTheme.typography.bodySmall)
         }
     }
 }

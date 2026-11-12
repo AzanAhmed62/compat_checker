@@ -1,103 +1,94 @@
 # Next Task
 
-## Current verified state (2026-11-10)
+## Current verified state (2026-11-12)
 
-- Database/RLS: **7 SQL test files passed** against a disposable PostgreSQL
-  cluster on port `55432` after applying the test shim, all **12 ordered
-  migrations**, and the updated `seed.sql`.
-- Full local Supabase stack: **started and reset successfully** with the pinned
-  `public.ecr.aws/supabase/postgres:17.11.0.011` image and the isolated ports
-  in `supabase/config.toml`. Auth health and password sign-in returned 200;
-  public views, RLS denials, collection/follow lifecycles, evidence URL
-  validation, vote privacy, admin-only RPCs, and Storage object
-  upload/read/delete policies by role were exercised over HTTP. Live Edge
-  Function invocation remains unverified.
-- Admin: TypeScript build/typecheck passed; **15 Vitest tests in 3 files**
-  passed; Vite production build transformed 181 modules (498.34 kB JS,
-  142.18 kB gzip; 16.84 kB CSS). Sign-in, dashboard, catalog, and users pages
-  were exercised against the local stack in a browser with no console errors.
-- Android: `:app:assembleDebug`, `:app:assembleDebugAndroidTest`, and
-  **17 JVM tests in 6 test classes** passed with no failures/errors/skips.
-  Version `1.1.0` (version code 2). On 2026-11-10 the connected suite passed
-  **5/5** on a OnePlus 6T (Android 11): Room 1-to-2 migration plus four checker
-  Compose tests. Live smoke testing against the local API covered catalog (7
-  products), product detail, password sign-in, collection create/add/visibility,
-  follow/unfollow, leaderboard, notification routing, guide Markdown, offline
-  guide cache, cold/warm deep links, light/dark themes, and Urdu/RTL. Remaining
-  device gaps are listed under Priority 2.
-- Edge Functions: Deno typecheck passed; **24 handler tests passed** with 0
-  failures (2026-11-09).
-- Public admin routes: `/privacy` and `/delete-account` are implemented and
-  built. They require `VITE_DATA_CONTROLLER`, `VITE_SUPPORT_EMAIL`,
-  deployment, and an external URL before Play declarations.
+- Database/RLS: **8 SQL test files passed** against a disposable PostgreSQL
+  database on port `55322` (`PGUSER=postgres`) after applying the test shim,
+  all **13 ordered migrations**, and the updated `seed.sql`.
+- Live local stack: reset twice with the pinned
+  `public.ecr.aws/supabase/postgres:17.11.0.011` image; all 13 migrations and
+  `seed.sql` applied. The final reset left **7 products, 5 rules, 1 guide, and
+  4 profiles**.
+- Admin: TypeScript typecheck passed; **15 Vitest tests in 3 files** passed; the
+  Vite production build passed. The 2026-11-12 browser sweep covered atomic
+  product/guide/rule saves, change reasons, version counts, rollback evidence
+  fidelity, reports, contributions, comments, requests, users/roles/status and
+  suspended-session denial, media, CSV export/import and rollback, analytics,
+  audit filtering, pagination, the expected duplicate-slug error, and
+  contributor/trusted route gating. No unexpected console errors were recorded.
+- Android: `:app:assembleDebug`, `:app:testDebugUnitTest`, and
+  `:app:assembleDebugAndroidTest` passed; **28 JVM tests in 7 test classes**
+  passed with no failures/errors/skips. The v1.2 connected suite passed **5/5**
+  on 2026-11-12 on a OnePlus A6010 (Android 11). Version is `1.2.0` (version
+  code 3).
+- Edge Functions: Deno typecheck passed; **32 tests passed** with 0 failures,
+  including eight HTTP-level tests that bind handlers to ephemeral localhost
+  ports with injected auth/database fakes. Live local invocation on 2026-11-12
+  used the real Edge Runtime, admin JWT, and database: CORS preflight/origin
+  rejection, CSV export, cron-secret enforcement, and an eligible account purge
+  all behaved as expected.
 - CI: `.github/workflows/ci.yml` defines database, admin, Edge Function, and
-  Android jobs; it has not run on GitHub Actions.
+  Android jobs and includes the HTTP Edge test file and `--allow-net`. The
+  workflow succeeded on GitHub Actions at commit `58d30cc`; the local v1.2
+  commit has not run remotely.
+- Git: the v1.2 tree is committed locally. Nothing has been pushed or deployed.
 - No remote Supabase project, Play Console access, signing key, deployed
   privacy/deletion URL, or store assets are available. None were used.
 
-## v1.1 delivered (committed locally; push pending)
+## v1.2 delivered (local commit)
 
-- Social read models: `list_my_collections`, `get_collection`,
-  `get_public_profile`, and standalone evidence URL validation in migration
-  `20261021001200_social_read_models.sql`, with SQL coverage in
-  `supabase/tests/70_social_read_models.sql`.
-- Android collections (public/private, create/update/delete, add/remove
-  product), follows, public profiles, reputation leaderboard, product-screen
-  "add to collection", and profile links.
-- Catalog brand filtering and refresh.
-- Offline guide list/detail caching (Room schema version 2, explicit 1-to-2
-  migration) and a safe Markdown subset renderer.
-- Notification routing for product, guide, rule, profile, and collection links,
-  with a visible message for unsupported/malformed links.
-- Admin search-term sanitization and tests.
-- Linux/macOS database runner `scripts/db_test.sh`; CI Android SDK
-  platform/build-tools fix; local Supabase port profile documented in
-  `supabase/config.toml`.
+- Migration `20261021001300_admin_transactions.sql`:
+  - `admin_save_product`, `admin_save_guide`, and `admin_save_rule` perform
+    complete saves in one transaction.
+  - Rule saves suppress intermediate snapshots and write exactly one final
+    version with the final evidence set.
+  - Direct evidence edits on a published rule create a version; draft evidence
+    edits do not.
+  - Evidence can only be attached to a rule owned by the acting admin.
+  - Symmetric relationships are canonicalized server-side.
+  - `admin_rollback_rule` restores the exact snapshot evidence set and writes a
+    new version instead of rewriting old history.
+- `supabase/tests/80_admin_transactions.sql` covers atomicity, history counts,
+  evidence ownership, canonical orientation, and rollback fidelity.
+- Admin API/pages call the RPCs; client-supplied actor IDs were removed and
+  rule updates require a change reason.
+- Android contribution forms for `new_product`, `new_rule`, `evidence`, and
+  `guide`, with payload builders, 11 builder unit tests, and English/Urdu
+  labels. The evidence action is available from the rule screen.
+- Localized enum/status/relationship/difficulty labels and remaining hardcoded
+  Android labels.
+- Eight HTTP-level Edge tests in `supabase/functions/tests/http_test.ts`.
+- Android version `1.2.0` (version code 3).
+- Documentation updated for the new writes, tests, CI state, and known gaps.
 
-## Priority 1: Close remaining live-stack gaps
+## Priority 1: Remaining browser and release-surface gaps
 
-The local stack, Auth, PostgREST/RLS, social lifecycles, evidence validation,
-vote privacy, Storage object policies, and admin console
-sign-in/dashboard/catalog/users are verified. Do not repeat completed work;
-extend the same local environment.
+The v1.2 live-stack reset, Edge invocation, admin browser sweep, and device
+suite are complete. Remaining browser work:
 
-1. Invoke both Edge Functions against the local stack with real admin JWTs and
-   database RPCs; confirm CORS, auth mapping, CSV import/export, purge
-   authorization, and log redaction.
-2. Exercise the remaining admin console workflows against the live stack:
-   catalog create/update/publish, rules/evidence, rollback, reports,
-   contributions, comments, requests, users/roles, guides, media, CSV,
-   analytics, audit logs, pagination, and error states.
-3. Extend Android device coverage beyond the completed catalog/detail/auth/
-   collection/follow/leaderboard/notification/guide/offline/deep-link/theme
-   smoke pass: favorites, votes, comments, requests, contributions, account
-   deletion, and session expiry.
-4. Keep exact results in `docs/TEST_PLAN.md` and `docs/KNOWN_ISSUES.md` current
-   as the remaining device and admin flows are exercised.
+1. Test the public `/privacy` and `/delete-account` routes against an authorized
+   deployed backend, including configured controller/support values and a real
+   deletion request/cancel cycle.
+2. Browser-test full session-expiry and token-refresh handling in the admin app.
+3. Exercise the remaining moderation field-validation combinations
+   (contribution reject/request-changes, request decline, report investigating)
+   and any UI states not covered by the completed sweep.
+4. Re-run the live smoke pass after any migration, RPC, or admin-page change.
 
 Never connect to, reset, or mutate a remote Supabase project without explicit
 owner authorization.
 
-## Priority 2: Android runtime and accessibility
+## Priority 2: Android device and accessibility
 
-- The connected suite now passes **5/5** on a physical OnePlus 6T. Rerun it
-  after Android changes:
-  ```bash
-  cd apps/android
-  ./gradlew :app:connectedDebugAndroidTest
-  ```
-- Current instrumentation coverage is the checker result summary (unknown,
-  compatible, incompatible, same-product) and the Room 1-to-2 migration. Add
-  browse, detail, auth prompt, deep links, collections, profiles, offline
-  fallback, RTL, and dark-theme tests.
-- Verify favorites, votes, comments, requests, contributions, notifications,
-  account-deletion request/cancel, and session expiry against the full stack.
-  Follow/unfollow, leaderboard, notification routing, and core social screens
-  were exercised on device on 2026-11-10.
+- Exercise the new contribution forms on device against the local stack:
+  validation errors, successful submission, signed-out prompt, and Urdu/RTL.
+- Extend instrumentation coverage beyond the checker summary and Room 1-to-2
+  migration: browse, detail, auth prompt, deep links, collections, profiles,
+  contributions, offline fallback, RTL, and dark theme.
+- Verify favorites, votes, comments, requests, notifications, account-deletion
+  request/cancel, and session expiry against the full stack.
 - Complete TalkBack, switch access, 200% font-scale, and native-speaker Urdu
   review.
-- Address remaining functional gaps: richer contribution forms (new rule,
-  evidence, guide), media upload, and offline request/account data.
 
 ## Priority 3: Edge Functions and deployment
 
@@ -110,8 +101,8 @@ owner authorization.
 
 ## Priority 4: CI and release
 
-1. Push the workflow and fix any runner-only failures; it has not executed
-   remotely.
+1. Review, commit, and push the v1.2 tree; fix any runner-only failures. The
+   workflow has not executed on the v1.2 changes.
 2. Deploy the admin site with `/privacy` and `/delete-account`, configure the
    data controller and support email, and verify SPA fallback and CORS.
 3. Produce a signed AAB with an upload key stored outside the repository.
@@ -122,16 +113,16 @@ owner authorization.
 
 ## Verification commands
 
-Database (Linux/macOS; disposable PostgreSQL on `55432`):
+Database (Linux/macOS; adjust the port/user to your disposable server):
 
 ```bash
-PGPASSWORD=postgres PGUSER=supabase_admin PGPORT=55432 ./scripts/db_test.sh --keep
+PGPASSWORD=postgres PGUSER=postgres PGPORT=55322 ./scripts/db_test.sh --keep
 ```
 
 Windows:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/db_test.ps1 -Keep -HostName 127.0.0.1 -Port 55432
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/db_test.ps1 -Keep
 ```
 
 Admin:
@@ -161,8 +152,9 @@ deno check supabase/functions/_shared/auth.ts \
   supabase/functions/purge-pending-accounts/handler.ts \
   supabase/functions/tests/auth_test.ts \
   supabase/functions/tests/admin_csv_test.ts \
-  supabase/functions/tests/purge_test.ts
-deno test --allow-env supabase/functions/tests
+  supabase/functions/tests/purge_test.ts \
+  supabase/functions/tests/http_test.ts
+deno test --allow-env --allow-net supabase/functions/tests
 ```
 
 ## Do not
@@ -171,4 +163,5 @@ deno test --allow-env supabase/functions/tests
 - Do not run `seed.sql` or `supabase/tests/00_shim.sql` against production.
 - Do not weaken RLS, expose vote rows, or infer compatibility without explicit published rules.
 - Do not put a service-role key, signing password, or other secret in a client build or tracked file.
+- Do not modify the applied migration `20261021001300_admin_transactions.sql`; add a new ordered migration and tests for further changes.
 - Do not invent test counts, credentials, deployment status, store assets, or runtime results.

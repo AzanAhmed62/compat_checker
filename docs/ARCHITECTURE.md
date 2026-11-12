@@ -27,10 +27,12 @@ The clients never hold a service-role key. The admin console uses the same publi
 
 ### Schema and access
 
-- Twelve ordered migrations build the schema, identity, catalog, rules/evidence, community, reputation, social features, analytics, admin functions, hardening, account purge, and social read models.
+- Thirteen ordered migrations build the schema, identity, catalog, rules/evidence, community, reputation, social features, analytics, admin functions, hardening, account purge, social read models, and atomic admin writes.
 - Tables hold source data. Public consumers read explicit-column owner-rights views: `products_public`, `rules_public`, `evidence_public`, `guides_public`, `guide_steps_public`, `requests_public`, `comments_public`, `profiles_public`, `public_stats`, and related collection views.
 - RLS is enabled on user-owned and privileged tables. Public views intentionally expose only published/visible rows and never expose user IDs for votes or anonymous requests.
 - Mutations run through `SECURITY DEFINER` functions with `SET search_path = ''` and schema-qualified references. Direct write policies are limited to admins where appropriate.
+- Product, guide, and rule/evidence admin saves are single server-authorized RPCs (`admin_save_product`, `admin_save_guide`, `admin_save_rule`). They replace child rows inside one transaction, verify evidence ownership, and canonicalize symmetric relationships server-side. A failed request leaves the prior state intact.
+- Rule updates suppress intermediate snapshots and write exactly one final version containing the complete evidence set. Published-rule evidence changes made outside those RPCs still leave a version trail; draft evidence changes do not create misleading history. `admin_rollback_rule` restores the exact snapshot evidence set and writes a new version rather than rewriting older history.
 - The points ledger is append-only; totals are aggregates. Account roles, bans, and rule status are server-owned.
 
 ### Compatibility evaluation
@@ -50,7 +52,7 @@ It does not query the graph, infer missing links, or merge similar products. The
 - `admin-csv`: authenticated admin CSV import/export bridge. It verifies the caller's JWT, resolves the profile role, and calls admin-only RPCs through a **caller-scoped** client so RLS/RPC role checks remain authoritative. It does not use a service-role client. It is configured with `verify_jwt = true`.
 - `purge-pending-accounts`: scheduled worker guarded by `PURGE_CRON_SECRET`, invoking the service-role-only purge function. It does not accept user JWTs. It is configured with `verify_jwt = false` because the shared secret is the authentication mechanism.
 
-Docker, the Supabase CLI, and Deno are available in this workspace. Edge Function handlers are typechecked and covered by local execution tests. A local Supabase stack with the pinned PostgreSQL image was started and reset on 2026-11-09, and live Auth/PostgREST/RLS/admin and Storage object-policy checks were exercised over HTTP; live Edge Function invocation was not. Instrumented Compose tests compile, but no usable emulator/device session has run them. See `docs/KNOWN_ISSUES.md` for current gaps.
+Docker, the Supabase CLI, and Deno are available in this workspace. Edge Function handlers are typechecked and covered by local execution tests, including HTTP-level tests that start the handlers on ephemeral localhost ports and exercise CORS, methods, JSON parsing, CSV responses, and cron authorization. A local Supabase stack with the pinned PostgreSQL image was started and reset on 2026-11-09, and live Auth/PostgREST/RLS/admin and Storage object-policy checks were exercised over HTTP; live Edge Function invocation was not. Instrumented Compose tests compile, but no usable emulator/device session has run them for this revision. See `docs/KNOWN_ISSUES.md` for current gaps.
 
 ## Android client
 
@@ -86,14 +88,16 @@ UI (Compose screens, UDF state)
 - React 19, TypeScript, Vite, TanStack Query, React Router, Supabase JS.
 - Auth provider loads the session and the caller's `me()` payload; navigation is filtered by server-provided capabilities, while the server remains authoritative.
 - Pages cover dashboard, catalog, rules/evidence and versions, reports, contributions, comments, requests, users/roles, guides, media, analytics, audit logs, and CSV tools.
+- Catalog, guide, and rule saves call server RPCs instead of composing multiple PostgREST requests. The rule editor requires a change reason for updates and sends the complete evidence set; the server decides ownership, canonical orientation, status transitions, and snapshot content.
 - TanStack Query handles cache invalidation after mutations. Errors are normalized through a shared error formatter.
 
 ## Testing and delivery
 
-- SQL tests run against a disposable local PostgreSQL database using a test-only Supabase shim. They are not run against production.
+- SQL tests run against a disposable local PostgreSQL database using a test-only Supabase shim. They are not run against production. The v1.2 suite has eight files, including atomicity, snapshot-fidelity, evidence-ownership, and rollback-set coverage.
 - Admin tests cover CSV, permission, and search-sanitization helpers with Vitest. The public `/privacy` and `/delete-account` surfaces are typechecked and built but have no live-backend UI test yet.
-- Android unit tests target repositories, DTO mapping, Markdown parsing, notification routing, and structured correction payloads. Compose instrumentation tests cover the checker result states; they compile in CI but require an emulator/device to execute.
-- CI is defined for database, admin, Edge Function, and Android jobs. It has not run remotely. The database CI job uses a PostgreSQL service container plus the shim runner, not `supabase start`.
+- Android unit tests target repositories, DTO mapping, Markdown parsing, notification routing, structured correction payloads, and the new contribution payload builders. Compose instrumentation tests cover the checker result states; they compile in CI but require an emulator/device to execute.
+- Edge tests cover handler units and HTTP request/response behavior on ephemeral localhost servers. They use injected auth/database fakes and are not a live-stack deployment test.
+- CI defines database, admin, Edge Function, and Android jobs. The four-job workflow succeeded on GitHub Actions at commit `58d30cc`; the v1.2 work is committed locally but has not run remotely. The database CI job uses a PostgreSQL service container plus the shim runner, not `supabase start`.
 - No remote Supabase project, Play signing key, or other production credential is used in this repository.
 
 ## Architectural decisions and trade-offs

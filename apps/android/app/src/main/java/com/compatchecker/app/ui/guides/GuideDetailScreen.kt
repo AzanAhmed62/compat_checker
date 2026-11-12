@@ -129,7 +129,7 @@ private fun StepCard(step: GuideStep) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("${step.position}.", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                Text(stringResource(R.string.guide_step_position, step.position), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                 Text(step.title, style = MaterialTheme.typography.titleMedium)
             }
             if (step.imageUrl != null) {

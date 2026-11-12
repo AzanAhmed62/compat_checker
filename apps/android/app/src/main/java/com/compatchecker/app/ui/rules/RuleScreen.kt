@@ -25,7 +25,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -35,7 +37,9 @@ import com.compatchecker.app.R
 import com.compatchecker.app.domain.model.RuleDetail
 import com.compatchecker.app.domain.repository.AuthRepository
 import com.compatchecker.app.domain.repository.CompatibilityRepository
+import com.compatchecker.app.domain.repository.ProfileRepository
 import com.compatchecker.app.ui.compatViewModel
+import com.compatchecker.app.ui.profile.EvidenceContributionDialog
 import com.compatchecker.app.ui.components.EvidenceList
 import com.compatchecker.app.ui.components.ErrorPane
 import com.compatchecker.app.ui.components.LoadingPane
@@ -48,18 +52,30 @@ import com.compatchecker.app.ui.components.VerificationChip
 fun RuleScreen(
     ruleId: String,
     compatibility: CompatibilityRepository,
+    profiles: ProfileRepository,
     auth: AuthRepository,
     onBack: () -> Unit,
     onAuthRequired: () -> Unit,
 ) {
-    val viewModel: RuleViewModel = compatViewModel { RuleViewModel(ruleId, compatibility, auth) }
+    val viewModel: RuleViewModel = compatViewModel {
+        RuleViewModel(ruleId, compatibility, profiles, auth)
+    }
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
+    var showEvidence by remember { mutableStateOf(false) }
+    val evidenceSubmittedMessage = stringResource(R.string.contribution_evidence_submitted)
 
     LaunchedEffect(state.message) {
         state.message?.let {
             snackbar.showSnackbar(it)
             viewModel.consumeMessage()
+        }
+    }
+    LaunchedEffect(state.evidenceSubmitted) {
+        if (state.evidenceSubmitted) {
+            showEvidence = false
+            viewModel.consumeEvidenceSubmitted()
+            snackbar.showSnackbar(evidenceSubmittedMessage)
         }
     }
     LaunchedEffect(state.authPrompt) {
@@ -90,9 +106,23 @@ fun RuleScreen(
                 rule = state.rule!!,
                 voting = state.voting,
                 onVote = viewModel::vote,
+                onSuggestEvidence = { showEvidence = true },
                 modifier = Modifier.padding(padding),
             )
         }
+    }
+
+    if (showEvidence) {
+        EvidenceContributionDialog(
+            ruleId = ruleId,
+            busy = state.evidenceBusy,
+            serverError = state.evidenceError,
+            onDismiss = {
+                showEvidence = false
+                viewModel.clearEvidenceError()
+            },
+            onSubmit = { draft -> viewModel.submitEvidence(draft) },
+        )
     }
 }
 
@@ -101,6 +131,7 @@ private fun RuleBody(
     rule: RuleDetail,
     voting: Boolean,
     onVote: (String) -> Unit,
+    onSuggestEvidence: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -148,6 +179,14 @@ private fun RuleBody(
         }
         item { SectionTitle(stringResource(R.string.section_evidence)) }
         item { EvidenceList(rule.evidence) }
+        item {
+            OutlinedButton(
+                onClick = onSuggestEvidence,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(R.string.contribution_evidence_add))
+            }
+        }
         item { SectionTitle(stringResource(R.string.section_votes)) }
         item {
             Text(
@@ -155,7 +194,16 @@ private fun RuleBody(
                 style = MaterialTheme.typography.bodyMedium,
             )
             if (rule.myVote != null) {
-                Text("Your vote: ${rule.myVote}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                val voteLabel = when (rule.myVote) {
+                    "confirm" -> stringResource(R.string.action_confirm)
+                    "dispute" -> stringResource(R.string.action_dispute)
+                    else -> rule.myVote
+                }
+                Text(
+                    stringResource(R.string.rule_your_vote, voteLabel),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
                 if (rule.myVote == "confirm") {

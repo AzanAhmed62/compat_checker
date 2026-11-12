@@ -176,62 +176,30 @@ export async function saveProduct(
       sort_order: number;
     }>;
   },
-  actorId: string,
   id?: string,
 ): Promise<string> {
-  const db = client();
-  let productId = id;
-
-  if (id) {
-    const { error } = await db.from('products').update(input).eq('id', id);
-    if (error) fail(error);
-  } else {
-    const { data, error } = await db
-      .from('products')
-      .insert({ ...input, created_by: actorId })
-      .select('id')
-      .single();
-    if (error) fail(error);
-    productId = (data as { id: string }).id;
-  }
-
-  if (!productId) throw new Error('Product id was not returned');
-
   const aliases = [...new Set(relations.aliases.map((alias) => alias.trim()).filter(Boolean))];
-  const specs = relations.specs.filter((spec) => spec.label.trim() && spec.value.trim());
+  const specs = relations.specs
+    .filter((spec) => spec.label.trim() && spec.value.trim())
+    .map((spec, index) => ({
+      label: spec.label.trim(),
+      value: spec.value.trim(),
+      unit: spec.unit?.trim() || null,
+      is_critical: spec.is_critical,
+      sort_order: index,
+    }));
 
-  const { error: aliasDeleteError } = await db
-    .from('product_aliases')
-    .delete()
-    .eq('product_id', productId);
-  if (aliasDeleteError) fail(aliasDeleteError);
-  if (aliases.length > 0) {
-    const { error } = await db
-      .from('product_aliases')
-      .insert(aliases.map((alias) => ({ product_id: productId, alias })));
-    if (error) fail(error);
-  }
-
-  const { error: specDeleteError } = await db
-    .from('product_specs')
-    .delete()
-    .eq('product_id', productId);
-  if (specDeleteError) fail(specDeleteError);
-  if (specs.length > 0) {
-    const { error } = await db.from('product_specs').insert(
-      specs.map((spec, index) => ({
-        product_id: productId,
-        label: spec.label.trim(),
-        value: spec.value.trim(),
-        unit: spec.unit?.trim() || null,
-        is_critical: spec.is_critical,
-        sort_order: index,
-      })),
-    );
-    if (error) fail(error);
-  }
-
-  return productId;
+  // One server-authorized transaction: product, aliases, and specifications
+  // either all persist or the previous state survives.
+  const { data, error } = await client().rpc('admin_save_product', {
+    p_id: id ?? null,
+    p_fields: input,
+    p_aliases: aliases,
+    p_specs: specs,
+  });
+  if (error) fail(error);
+  if (!data) throw new Error('Product id was not returned');
+  return data as string;
 }
 
 export async function deleteProduct(id: string): Promise<void> {
@@ -338,26 +306,10 @@ export interface EvidenceInput {
   captured_at: string | null;
 }
 
-function canonicalRule(input: RuleInput, actorId: string) {
-  const symmetric =
-    input.relationship === 'works_with' ||
-    input.relationship === 'same_as' ||
-    input.relationship === 'not_compatible_with';
-  if (symmetric && input.subject_product_id > input.object_product_id) {
-    return {
-      ...input,
-      subject_product_id: input.object_product_id,
-      object_product_id: input.subject_product_id,
-      reviewed_by: actorId,
-    };
-  }
-  return { ...input, reviewed_by: actorId };
-}
-
 export async function saveRule(
   input: RuleInput,
   evidence: EvidenceInput[],
-  actorId: string,
+  reason: string | null,
   id?: string,
 ): Promise<string> {
   if (input.subject_product_id === input.object_product_id) {
@@ -372,66 +324,19 @@ export async function saveRule(
     }
   }
 
-  const db = client();
-  let ruleId = id;
-  const payload = canonicalRule(input, actorId);
-
-  if (id) {
-    const { error } = await db.from('compatibility_rules').update(payload).eq('id', id);
-    if (error) fail(error);
-  } else {
-    const { data, error } = await db
-      .from('compatibility_rules')
-      .insert({ ...payload, status: 'draft', created_by: actorId, published_at: null })
-      .select('id')
-      .single();
-    if (error) fail(error);
-    ruleId = (data as { id: string }).id;
-  }
-  if (!ruleId) throw new Error('Rule id was not returned');
-
-  const existing = id ? await getRuleEvidence(id) : [];
-  const keptIds = new Set(evidence.flatMap((item) => (item.id ? [item.id] : [])));
-
-  // Insert new evidence first so a published rule never temporarily loses its
-  // last citation, then update existing rows, then remove omitted evidence.
-  for (const item of evidence) {
-    const row = {
-      evidence_type: item.evidence_type,
-      title: item.title,
-      source_url: item.source_url,
-      publisher: item.publisher || null,
-      excerpt: item.excerpt || null,
-      captured_at: item.captured_at || null,
-    };
-    if (item.id) {
-      const { error } = await db.from('rule_evidence').update(row).eq('id', item.id);
-      if (error) fail(error);
-    } else {
-      const { error } = await db
-        .from('rule_evidence')
-        .insert({ ...row, rule_id: ruleId, added_by: actorId });
-      if (error) fail(error);
-    }
-  }
-  const removed = existing.filter((item) => !keptIds.has(item.id));
-  for (const item of removed) {
-    const { error } = await db.from('rule_evidence').delete().eq('id', item.id);
-    if (error) fail(error);
-  }
-
-  if (!id || payload.status !== 'published') {
-    const { error } = await db
-      .from('compatibility_rules')
-      .update({
-        status: payload.status,
-        published_at: payload.status === 'published' ? new Date().toISOString() : null,
-      })
-      .eq('id', ruleId);
-    if (error) fail(error);
-  }
-
-  return ruleId;
+  // The RPC canonicalizes symmetric relationships, verifies evidence
+  // ownership, applies the complete evidence set, and writes exactly one
+  // final snapshot containing the resulting state.
+  const { data, error } = await client().rpc('admin_save_rule', {
+    p_id: id ?? null,
+    p_fields: input,
+    p_evidence: evidence,
+    p_reason: reason?.trim() || null,
+  });
+  if (error) fail(error);
+  const result = data as { id?: string } | null;
+  if (!result?.id) throw new Error('Rule id was not returned');
+  return result.id;
 }
 
 export async function listRuleVersions(ruleId: string): Promise<RuleVersion[]> {
@@ -738,46 +643,18 @@ export interface GuideInput {
 export async function saveGuide(
   input: GuideInput,
   steps: Array<{ title: string; body: string; image_path: string | null }>,
-  actorId: string,
   id?: string,
 ): Promise<string> {
-  const db = client();
-  let guideId = id;
-  const payload = {
-    ...input,
-    status: input.status,
-    published_at:
-      input.status === 'published' ? new Date().toISOString() : null,
-  };
-  if (id) {
-    const { error } = await db.from('guides').update(payload).eq('id', id);
-    if (error) fail(error);
-  } else {
-    const { data, error } = await db
-      .from('guides')
-      .insert({ ...payload, created_by: actorId })
-      .select('id')
-      .single();
-    if (error) fail(error);
-    guideId = (data as { id: string }).id;
-  }
-  if (!guideId) throw new Error('Guide id was not returned');
-
-  const { error: deleteError } = await db.from('guide_steps').delete().eq('guide_id', guideId);
-  if (deleteError) fail(deleteError);
-  if (steps.length > 0) {
-    const { error } = await db.from('guide_steps').insert(
-      steps.map((step, index) => ({
-        guide_id: guideId,
-        position: index + 1,
-        title: step.title,
-        body: step.body,
-        image_path: step.image_path,
-      })),
-    );
-    if (error) fail(error);
-  }
-  return guideId;
+  // Replacing steps is atomic. A failed step insert rolls back the guide
+  // update and restores the previous ordered step set.
+  const { data, error } = await client().rpc('admin_save_guide', {
+    p_id: id ?? null,
+    p_fields: input,
+    p_steps: steps,
+  });
+  if (error) fail(error);
+  if (!data) throw new Error('Guide id was not returned');
+  return data as string;
 }
 
 export async function listProductMedia(): Promise<ProductMedia[]> {

@@ -4,38 +4,50 @@ This file records verified limitations and release blockers. Items are not specu
 
 ## Release blockers
 
-1. **Android release readiness remains unverified.** The debug build passes
-   `:app:assembleDebug` and 17 JVM tests. On 2026-11-10 the connected suite
-   passed **5/5** on a physical OnePlus 6T (Android 11), and live smoke testing
-   against the local stack covered catalog, product detail, password sign-in,
-   collection create/add/visibility, follow/unfollow, leaderboard, notification
-   routing, guide Markdown, offline guide cache, cold and warm deep links,
-   light/dark themes, and Urdu/RTL. Not verified on device:
+1. **Android release readiness remains unverified.** The v1.2 debug build passes
+   `:app:assembleDebug` and 28 JVM tests, and the v1.2 connected suite passed
+   **5/5** on a physical OnePlus A6010 (Android 11) on 2026-11-12. Live smoke
+   testing against the local stack covered catalog, product detail, password
+   sign-in, collection create/add/visibility, follow/unfollow, leaderboard,
+   notification routing, guide Markdown, offline guide cache, cold and warm deep
+   links, light/dark themes, and Urdu/RTL. Not verified on device: the new
+   product/rule/evidence/guide contribution forms,
    favorites/votes/comments/request/contribution mutations, account-deletion
    request/cancel, full session-expiry handling, 200% font scale,
    TalkBack/switch access, and native-speaker Urdu review. No signed AAB
    exists; the debug APK is not a release build.
 2. **Local full-stack coverage is partial.** A local Supabase stack with the
-   pinned `public.ecr.aws/supabase/postgres:17.11.0.011` image started and
-   reset successfully on 2026-11-09, and Auth/PostgREST/RLS, social lifecycles,
-   evidence validation, vote privacy, admin RPCs, and Storage object
-   upload/read/delete policies by role were exercised over HTTP. Live Edge
-   Function invocation and production headers/configuration remain unverified.
-   SQL tests still use the PostgreSQL shim; Edge tests use in-process
-   handlers.
-3. **Edge Functions lack live deployment evidence.** Deno typechecking and 24
-   handler tests pass locally, but no local or hosted HTTP invocation, real
-   admin JWT/database RPC, scheduler, or function-secret deployment has been
-   tested.
+   pinned `public.ecr.aws/supabase/postgres:17.11.0.011` image was reset and
+   exercised on 2026-11-12: all 13 migrations plus seed, Auth/PostgREST/RLS,
+   social lifecycles, evidence validation, vote privacy, admin RPCs, Storage
+   object policies, and live Edge Function HTTP invocation against the real
+   local database. Production headers, hosted configuration, and hosted Edge
+   deployment remain unverified. SQL tests still use the PostgreSQL shim.
+3. **Edge Functions lack hosted deployment evidence.** Deno typechecking and 32
+   tests pass locally, including eight HTTP-level tests over ephemeral
+   localhost servers with injected clients. On 2026-11-12 the functions were
+   invoked in a local Edge Runtime with a real admin JWT and live database,
+   including CSV export, origin rejection, cron-secret enforcement, and an
+   account purge. No hosted function, scheduler, production function secret, or
+   deployed `ADMIN_ORIGIN` has been tested.
 4. **No signed AAB, Play Console access, signing key, deployed privacy/deletion
    URL, or store assets exist.** Release declarations are not complete. The
    public `/privacy` and `/delete-account` routes are implemented but require
    deployment-specific configuration.
-5. **Admin runtime coverage is partial.** Sign-in, dashboard, catalog, and
-   users pages were exercised against the local stack with no browser console
-   errors. Rule/evidence editing, rollback, reports, contributions, comments,
-   requests, guides, media, CSV, analytics, and error-state workflows have not
-   been exercised against the live backend.
+5. **Admin runtime coverage is broad but not exhaustive.** On 2026-11-12 the
+   browser sweep covered sign-in, dashboard, catalog, atomic product/guide/rule
+   saves, rule versioning and rollback, reports, contributions, comments,
+   requests, users/roles/status (including suspended-session denial), media,
+   CSV export/import and rollback, analytics, audit filtering and before/after
+   detail, pagination, the expected negative CSV error, and contributor/trusted
+   route gating. No unexpected console errors were recorded; the deliberate
+   duplicate-slug import produced the expected HTTP `400`. Remaining gaps: the
+   public `/privacy` and `/delete-account` routes have not been tested against a
+   deployed backend, full session-expiry/refresh handling is not browser-tested,
+   and not every field-validation or moderation combination was exercised.
+   During rapid automation, the media registry and users table sometimes
+   rendered before the refetch completed; a reload showed the correct state, and
+   SQL confirmed the writes.
 6. **Account deletion web path is implemented but not deployed or tested against
    a deployed backend.** The admin web app has a public deletion request/cancel
    route; Play still requires an externally reachable HTTPS URL that has been
@@ -49,12 +61,13 @@ This file records verified limitations and release blockers. Items are not specu
   unverified on device.
 - Compose instrumentation coverage currently targets the checker result summary
   (unknown, compatible, incompatible, same-product) and the Room 1-to-2
-  migration; 5/5 passed on device on 2026-11-10. Browse, detail, auth,
-  collections, profiles, deep links, RTL, and dark-theme UI tests are not
-  implemented.
-- Android structured contributions currently focus on `product_edit` patches.
-  Other contribution kinds exist server-side and in the admin console but have
-  no dedicated mobile form.
+  migration; 5/5 passed on device on 2026-11-12 under v1.2 source. Browse,
+  detail, auth, collections, profiles, contributions, deep links, RTL, and
+  dark-theme UI tests are not implemented.
+- Android now includes contribution forms for `new_product`, `new_rule`,
+  `evidence`, and `guide` alongside the existing `product_edit` correction
+  path. Payload builders are unit-tested, but the forms have not been exercised
+  on a device or against the live stack.
 - Guide Markdown rendering is a deliberately small subset: headings,
   paragraphs, lists, quotes, fenced code, bold, italic, inline code, and
   absolute HTTP(S) links. Raw HTML is displayed as text, not interpreted.
@@ -71,6 +84,10 @@ This file records verified limitations and release blockers. Items are not specu
 - No crash reporting or product analytics SDK is present. Server analytics
   exist but are only as complete as deployed event calls.
 - The Android app does not expose admin features by design.
+- A contributor who signs in to the admin site without moderator privileges
+  remains on the login form until navigating to a protected route, where the
+  "Administration access denied" screen appears. This is a UX issue, not an
+  authorization bypass.
 - Email-confirmation and password-recovery deep links are not implemented in
   the mobile app. Local Supabase has confirmations disabled; production auth
   policy must be configured accordingly.
@@ -112,15 +129,16 @@ This file records verified limitations and release blockers. Items are not specu
 - The Gradle wrapper is **8.14.5**. Keep it only while the CLI build and tests
   pass; CI is pinned to the same version.
 - The development machine has 8 GB of RAM, and root filesystem free space is
-  tight (about 4.6 GB free, 96% used). Android Studio/Docker/Gradle compete for
+  tight (about 3.1 GB free, 98% used). Android Studio/Docker/Gradle compete for
   memory and disk. `apps/android/gradle.properties` caps heap and disables
   parallel workers/configuration cache for this reason. Do not perform global
   Docker cleanup while other local projects are running.
 - The pinned Supabase PostgreSQL image and the local stack are present and were
   used successfully. Registry pulls may still be slow; do not replace the
   pinned image version to work around a transient pull failure.
-- CI has four jobs (database, admin, Edge Functions, Android), but has not run
-  on GitHub Actions.
+- CI has four jobs (database, admin, Edge Functions, Android). The workflow
+  succeeded on GitHub Actions at commit `58d30cc`; the local v1.2 commit has not
+  run remotely.
 
 ## Resolved during the rebuild
 
@@ -139,4 +157,10 @@ This file records verified limitations and release blockers. Items are not specu
   links.
 - Added social read-model RPCs and collection/profile SQL coverage, plus
   server-side evidence URL validation for standalone evidence contributions.
-                                                                                                                                                                                                                                                                                    
+- Added v1.2 atomic admin saves (`admin_save_product`, `admin_save_guide`,
+  `admin_save_rule`), single-snapshot rule versioning, exact-evidence rollback,
+  and SQL coverage in `80_admin_transactions.sql`.
+- Added v1.2 Android contribution forms for new products, new rules, evidence,
+  and guides, with builder unit tests and English/Urdu labels.
+- Added eight HTTP-level Edge Function tests and updated CI to run them with
+  network permission.

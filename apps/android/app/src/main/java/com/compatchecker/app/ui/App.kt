@@ -242,6 +242,7 @@ fun CompatApp(container: AppContainer) {
                 RuleScreen(
                     ruleId = entry.arguments?.getString("ruleId").orEmpty(),
                     compatibility = container.compatibilityRepository,
+                    profiles = container.profileRepository,
                     auth = container.authRepository,
                     onBack = { navController.popBackStack() },
                     onAuthRequired = openAuth,
@@ -257,6 +258,7 @@ fun CompatApp(container: AppContainer) {
             composable(Routes.CONTRIBUTIONS) {
                 ContributionsScreen(
                     profiles = container.profileRepository,
+                    catalog = container.catalogRepository,
                     onBack = { navController.popBackStack() },
                 )
             }

@@ -43,6 +43,9 @@
 - Any `not_compatible_with` rule forces an `incompatible` outcome; weaker positive claims cannot override it.
 - Evidence and rule provenance are preserved through versioning and retirement rather than destructive deletion.
 - Public rule/evidence views expose published records only. Drafts and rejected rules remain admin-only.
+- Product, guide, and rule/evidence saves run in one server-authorized RPC transaction. A failure in any child write rolls back the whole save, so a rule cannot keep new metadata with stale evidence (or the reverse).
+- `admin_save_rule` accepts evidence updates only for rows already attached to the target rule; evidence cannot be moved from another rule. It derives canonical orientation for symmetric relationships and records the change reason server-side. Direct edits to evidence on a published rule still produce a version; draft edits do not create misleading history.
+- `admin_rollback_rule` restores the exact evidence set recorded in the target version by its stable source URL and writes a new version. It does not rewrite old version reasons or resurrect evidence from another rule.
 
 ## Privacy
 
@@ -63,6 +66,7 @@
 - Avatar and evidence URLs require HTTP(S); evidence rejects example domains; avatars require HTTPS.
 - CSV upload size/row limits are enforced in the Edge/import path. CSV exports prefix spreadsheet formula characters (`=`, `+`, `-`, `@`, tab, carriage return) so exported text is not evaluated as a formula.
 - JSON contribution payloads validate required keys, types, enums, ownership, and evidence presence.
+- Admin saves validate the complete payload server-side, including child-row ownership, required evidence, canonical relationship pairs, bounded confidence, and change reasons. Client-supplied actor IDs are ignored; the RPC uses the authenticated admin.
 - Admin actions validate role/status transitions and require reasons where recorded.
 
 ## Moderation and abuse
@@ -76,8 +80,8 @@
 
 ## Known residual risks
 
-- Live Auth/PostgREST checks were performed against a local Supabase stack on 2026-11-09, including password sign-in, anonymous/public views, RLS denial on private tables, collection/follow lifecycles, evidence URL validation, vote privacy, admin-only RPCs, and Storage object upload/read/delete policies by role. Live Edge Function invocation and deployed production headers were not exercised. These remain deployment verification items, not claims of security.
-- SQL tests still use the plain-PostgreSQL shim, and Edge Function tests use in-process handler fakes; neither is a substitute for a hosted environment.
+- Live Auth/PostgREST/RLS checks were performed against a local Supabase stack on 2026-11-12, including password sign-in, anonymous/public views, RLS denial on private tables, social lifecycles, evidence URL validation, vote privacy, admin-only RPCs, Storage object policies, and live local Edge Function invocation with real auth/database access. Hosted Edge deployment and production headers were not exercised. These remain deployment verification items, not claims of security.
+- SQL tests still use the plain-PostgreSQL shim, and Edge Function tests use in-process handler fakes or handlers bound to localhost with injected clients; neither is a substitute for a hosted environment.
 - No penetration test, dependency audit enforcement, rate-limit load test, or production monitoring has been performed.
 - A compromised admin account can perform all admin actions by design; MFA and alerting are deployment requirements.
 - Client-side secrets are never acceptable. If a service-role key is ever exposed, rotate it immediately and review logs.

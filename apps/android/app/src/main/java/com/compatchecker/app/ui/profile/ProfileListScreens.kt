@@ -17,12 +17,18 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -76,15 +82,33 @@ fun FavoritesScreen(
     }
 }
 
+private enum class ContributionDialogKind { NEW_PRODUCT, NEW_RULE, GUIDE }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContributionsScreen(
     profiles: ProfileRepository,
+    catalog: CatalogRepository,
     onBack: () -> Unit,
 ) {
-    val viewModel: ContributionsViewModel = compatViewModel { ContributionsViewModel(profiles) }
+    val viewModel: ContributionsViewModel = compatViewModel {
+        ContributionsViewModel(profiles, catalog)
+    }
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val snackbar = remember { SnackbarHostState() }
+    val submittedMessage = stringResource(R.string.contribution_submitted_generic)
+    var dialog by remember { mutableStateOf<ContributionDialogKind?>(null) }
+
+    LaunchedEffect(state.submitted) {
+        if (state.submitted) {
+            dialog = null
+            viewModel.consumeSubmitted()
+            snackbar.showSnackbar(submittedMessage)
+        }
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.contributions_title)) },
@@ -95,7 +119,6 @@ fun ContributionsScreen(
         when {
             state.loading -> LoadingPane(Modifier.padding(padding))
             state.error != null -> ErrorPane(state.error!!, viewModel::load, Modifier.padding(padding))
-            state.items.isEmpty() -> EmptyPane(stringResource(R.string.contributions_empty), Modifier.padding(padding))
             else -> LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(padding),
                 contentPadding = PaddingValues(16.dp),
@@ -108,11 +131,78 @@ fun ContributionsScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                items(state.items, key = { it.id }) { contribution ->
-                    ContributionCard(contribution)
+                item {
+                    Text(
+                        stringResource(R.string.contribution_new_title),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                }
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(
+                            onClick = { dialog = ContributionDialogKind.NEW_PRODUCT },
+                            enabled = !state.optionsLoading,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) { Text(stringResource(R.string.contribution_new_product)) }
+                        OutlinedButton(
+                            onClick = { dialog = ContributionDialogKind.NEW_RULE },
+                            enabled = !state.optionsLoading && state.products.isNotEmpty(),
+                            modifier = Modifier.fillMaxWidth(),
+                        ) { Text(stringResource(R.string.contribution_new_rule)) }
+                        OutlinedButton(
+                            onClick = { dialog = ContributionDialogKind.GUIDE },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) { Text(stringResource(R.string.contribution_guide)) }
+                    }
+                }
+                if (state.items.isEmpty()) {
+                    item {
+                        Text(
+                            stringResource(R.string.contributions_empty),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                } else {
+                    items(state.items, key = { it.id }) { contribution ->
+                        ContributionCard(contribution)
+                    }
                 }
             }
         }
+    }
+
+    when (dialog) {
+        ContributionDialogKind.NEW_PRODUCT -> NewProductContributionDialog(
+            brands = state.brands,
+            categories = state.categories,
+            busy = state.submitting,
+            serverError = state.submitError,
+            onDismiss = {
+                dialog = null
+                viewModel.clearSubmitError()
+            },
+            onSubmit = { viewModel.submit(ContributionKind.NEW_PRODUCT, it) },
+        )
+        ContributionDialogKind.NEW_RULE -> NewRuleContributionDialog(
+            products = state.products,
+            busy = state.submitting,
+            serverError = state.submitError,
+            onDismiss = {
+                dialog = null
+                viewModel.clearSubmitError()
+            },
+            onSubmit = { viewModel.submit(ContributionKind.NEW_RULE, it) },
+        )
+        ContributionDialogKind.GUIDE -> NewGuideContributionDialog(
+            busy = state.submitting,
+            serverError = state.submitError,
+            onDismiss = {
+                dialog = null
+                viewModel.clearSubmitError()
+            },
+            onSubmit = { viewModel.submit(ContributionKind.GUIDE, it) },
+        )
+        null -> Unit
     }
 }
 
