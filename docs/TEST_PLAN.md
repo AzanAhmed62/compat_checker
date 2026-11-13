@@ -4,8 +4,9 @@
 
 These are exact, observed results from this workspace. Dates are stated per
 section; the v1.2 source tests and the live local-stack, browser, and
-connected-device checks were completed on 2026-11-12. They do not imply
-production readiness.
+connected-device checks were completed on 2026-11-12, with an additional
+Android mutation pass on 2026-11-12/13. They do not imply production
+readiness.
 
 ### Database and RLS
 
@@ -408,9 +409,38 @@ deployment remains untested.
 - Warm deep links were delivered to the running activity and navigated
   correctly for product, checker (`productId` preselected), guide, rule,
   collection, and profile. A cold-start product deep link was also verified.
-- Still not run on the device: favorites/votes/comments/request/contribution
-  mutations, account-deletion request/cancel, full session-expiry handling,
-  200% font scale, TalkBack/switch access, and native-speaker Urdu review.
+- A second live pass on 2026-11-12/13 exercised the v1.2 mutation paths on the
+  same device against the local stack:
+  - submitted `new_product`, `new_rule` (with one citation), `guide` (one
+    step), and standalone `evidence` contributions. All appeared as `pending`
+    in the app, and SQL confirmed the rows. No product was created while the
+    `new_product` contribution was pending.
+  - cast a rule confirm vote (aggregate **1 confirm**, SQL row present), saved
+    a favorite (`Saved`, SQL row present), and posted a product comment (SQL
+    status `visible`). The discussion header still showed `Discussion (2)`
+    after the third comment; a reload reconciled it.
+  - created a product request (status `open`) and cast one vote (**1 vote**,
+    SQL rows present).
+  - requested account deletion (`Account: Deletion pending`, SQL
+    `account_status = deletion_pending` with `deletion_requested_at` set), then
+    cancelled it (`Account: Active`, timestamp cleared, confirmation message).
+  - forced an expired access token while keeping a valid refresh token: the
+    app refreshed automatically, stored a new access token, and stayed signed
+    in. Deleting the server-side Auth session and forcing expiry again cleared
+    the stored session and returned the Profile tab to the signed-out state.
+- 200% font-scale smoke test: browse, product detail, and the comment composer
+  remained usable, but bottom-navigation labels wrapped and clipped
+  (`Brows e`, `Check er`, `Guide s`, `Reque sts`), and discussion author
+  metadata wrapped every few characters. This is an accessibility defect, not
+  a pass.
+- A repeat Urdu/RTL pass set `system_locales` to `ur-PK,en-US` and rebooted the
+  device, but ADB disconnected before the app could be checked. That pass is
+  **not verified**; the device was left with the Urdu locale setting pending
+  restoration. TalkBack is installed but was not exercised.
+- Still not run on the device: TalkBack/switch-access walkthrough,
+  native-speaker Urdu review, and a completed Urdu/RTL layout pass. The local
+  database was not reset after this mutation pass, so it still contains the
+  synthetic Android rows.
 
 ### Edge Functions
 

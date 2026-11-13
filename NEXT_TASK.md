@@ -20,7 +20,11 @@
   `:app:assembleDebugAndroidTest` passed; **28 JVM tests in 7 test classes**
   passed with no failures/errors/skips. The v1.2 connected suite passed **5/5**
   on 2026-11-12 on a OnePlus A6010 (Android 11). Version is `1.2.0` (version
-  code 3).
+  code 3). A live mutation pass on 2026-11-12/13 verified all four contribution
+  forms, rule voting, favorites, comments, product request submit/vote,
+  account-deletion request/cancel, automatic token refresh after expiry, and
+  signed-out cleanup after session revocation. A 200% font-scale smoke test
+  found clipped/wrapped bottom-navigation labels.
 - Edge Functions: Deno typecheck passed; **32 tests passed** with 0 failures,
   including eight HTTP-level tests that bind handlers to ephemeral localhost
   ports with injected auth/database fakes. Live local invocation on 2026-11-12
@@ -29,9 +33,12 @@
   all behaved as expected.
 - CI: `.github/workflows/ci.yml` defines database, admin, Edge Function, and
   Android jobs and includes the HTTP Edge test file and `--allow-net`. The
-  workflow succeeded on GitHub Actions at commit `58d30cc`; the local v1.2
-  commit has not run remotely.
-- Git: the v1.2 tree is committed locally. Nothing has been pushed or deployed.
+  workflow succeeded on GitHub Actions at commit `58d30cc`; the v1.2 commits
+  remain local because `git push origin main` failed on 2026-11-13 with no
+  configured GitHub HTTPS/SSH credentials.
+- Git: the v1.2 tree and documentation follow-up are committed locally on
+  `main`. A push was attempted on 2026-11-13 but failed because no GitHub
+  HTTPS/SSH credentials are configured. Nothing was deployed.
 - No remote Supabase project, Play Console access, signing key, deployed
   privacy/deletion URL, or store assets are available. None were used.
 
@@ -80,15 +87,32 @@ owner authorization.
 
 ## Priority 2: Android device and accessibility
 
-- Exercise the new contribution forms on device against the local stack:
-  validation errors, successful submission, signed-out prompt, and Urdu/RTL.
+Completed on the OnePlus A6010 against the local stack:
+
+- all four contribution forms (`new_product`, `new_rule`, `evidence`, `guide`)
+  submitted successfully and produced `pending` rows;
+- rule confirm voting, favorite, comment, product request submit/vote;
+- account-deletion request (`deletion_pending`) and cancellation (`active`);
+- automatic refresh with a new access token after expiry, and signed-out
+  cleanup after server-side session revocation;
+- 200% font-scale smoke pass, which found a layout defect.
+
+Remaining:
+
+- Restore the device locale to `en-US,en-PK`; the staged `ur-PK,en-US` attempt
+  was interrupted before the app could be checked. Complete Urdu/RTL layout
+  verification and native-speaker review.
+- Fix the 200% font-scale bottom-navigation wrapping/clipping and the narrow
+  discussion-author metadata column; re-test at 200%.
+- Complete TalkBack and switch-access validation.
+- Exercise contribution validation-error permutations and broader mutation
+  error states on device.
+- Reset the local stack after device testing to remove the synthetic
+  contributions, favorite, vote, comment, request, and request vote; verify the
+  clean **7 products / 5 rules / 1 guide / 4 profiles** state.
 - Extend instrumentation coverage beyond the checker summary and Room 1-to-2
   migration: browse, detail, auth prompt, deep links, collections, profiles,
   contributions, offline fallback, RTL, and dark theme.
-- Verify favorites, votes, comments, requests, notifications, account-deletion
-  request/cancel, and session expiry against the full stack.
-- Complete TalkBack, switch access, 200% font-scale, and native-speaker Urdu
-  review.
 
 ## Priority 3: Edge Functions and deployment
 
@@ -101,8 +125,10 @@ owner authorization.
 
 ## Priority 4: CI and release
 
-1. Review, commit, and push the v1.2 tree; fix any runner-only failures. The
-   workflow has not executed on the v1.2 changes.
+1. Authenticate GitHub, push the local v1.2 commits, then monitor GitHub Actions
+   and fix any runner-only failures. The workflow succeeded earlier at
+   `58d30cc`; the push on 2026-11-13 failed because no credentials were
+   configured.
 2. Deploy the admin site with `/privacy` and `/delete-account`, configure the
    data controller and support email, and verify SPA fallback and CORS.
 3. Produce a signed AAB with an upload key stored outside the repository.

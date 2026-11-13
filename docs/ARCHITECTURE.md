@@ -97,7 +97,7 @@ UI (Compose screens, UDF state)
 - Admin tests cover CSV, permission, and search-sanitization helpers with Vitest. The public `/privacy` and `/delete-account` surfaces are typechecked and built but have no live-backend UI test yet.
 - Android unit tests target repositories, DTO mapping, Markdown parsing, notification routing, structured correction payloads, and the new contribution payload builders. Compose instrumentation tests cover the checker result states; they compile in CI but require an emulator/device to execute.
 - Edge tests cover handler units and HTTP request/response behavior on ephemeral localhost servers. They use injected auth/database fakes and are not a live-stack deployment test.
-- CI defines database, admin, Edge Function, and Android jobs. The four-job workflow succeeded on GitHub Actions at commit `58d30cc`; the v1.2 work is committed locally but has not run remotely. The database CI job uses a PostgreSQL service container plus the shim runner, not `supabase start`.
+- CI defines database, admin, Edge Function, and Android jobs. The four-job workflow succeeded on GitHub Actions at commit `58d30cc`; the v1.2 commits remain local because no GitHub credentials are configured, so their remote result has not been observed. The database CI job uses a PostgreSQL service container plus the shim runner, not `supabase start`.
 - No remote Supabase project, Play signing key, or other production credential is used in this repository.
 
 ## Architectural decisions and trade-offs

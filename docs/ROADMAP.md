@@ -27,7 +27,7 @@
 - Data layer for Supabase Auth/PostgREST, Room offline cache (catalog and guides), DataStore preferences, and domain repository interfaces.
 - Catalog/search with brand filters, product detail, checker, rules/evidence, guides with safe Markdown rendering, requests, auth, profile, favorites, collections, follows, public profiles, leaderboard, contributions, notifications, and settings screens.
 - Contribution forms for product corrections, new products, new rules, evidence, and guides with validated payload builders and localized labels.
-- `:app:assembleDebug` passes; 28 JVM unit tests pass in 7 classes. The v1.2 connected suite passed 5/5 on 2026-11-12 on a OnePlus A6010 (Android 11), including the Room 1-to-2 migration and four checker Compose tests. Live smoke testing against the local API covered core browse/auth/social/guide/offline/deep-link/theme/RTL flows; broader mutation and accessibility coverage remains.
+- `:app:assembleDebug` passes; 28 JVM unit tests pass in 7 classes. The v1.2 connected suite passed 5/5 on 2026-11-12 on a OnePlus A6010 (Android 11), including the Room 1-to-2 migration and four checker Compose tests. Live smoke testing against the local API covered core browse/auth/social/guide/offline/deep-link/theme/RTL flows, and a 2026-11-12/13 mutation pass covered all four contribution forms, rule votes, favorites, comments, product requests/votes, account-deletion request/cancel, and session refresh/revocation. Accessibility gaps remain: 200% font-scale nav-label clipping, unfinished Urdu/RTL verification, and no TalkBack/switch-access pass.
 
 ### Local full-stack verification (2026-11-12)
 - The pinned local Supabase stack was reset twice with all 13 migrations and the seed; the final state had 7 products, 5 rules, 1 guide, and 4 profiles. Auth health, password sign-in, PostgREST public views/RLS, social lifecycles, evidence URL validation, vote privacy, admin RPCs, and Storage object policies were exercised.
@@ -37,9 +37,13 @@
 ## Next
 
 1. Test the public `/privacy` and `/delete-account` routes against a deployed backend; add full admin session-expiry/refresh browser coverage and the remaining moderation validation combinations.
-2. Extend Android runtime tests beyond the passed checker/Room suite and core smoke pass: add browse, detail, auth, social, offline, deep-link, RTL, and theme UI tests; complete favorites/votes/comments/request/contribution mutations, account deletion, session expiry, TalkBack, and font-scale checks.
+2. Extend Android runtime tests beyond the passed checker/Room suite and the
+   live smoke/mutation passes: add browse, detail, auth, social, offline,
+   deep-link, RTL, and theme UI tests; fix 200% font-scale bottom-nav clipping,
+   finish Urdu/RTL and TalkBack/switch-access validation, and run a final local
+   reset after device testing.
 3. Deploy both Edge Functions to an authorized staging project, configure `ADMIN_ORIGIN`, the purge secret, and the scheduler, then invoke them over hosted HTTP.
-4. Run the defined GitHub Actions workflow on a runner for the v1.2 changes; the workflow succeeded at `58d30cc`, but the local v1.2 commit has not executed remotely.
+4. Authenticate GitHub, push the v1.2 commits, and monitor GitHub Actions. The workflow succeeded at `58d30cc`; the 2026-11-13 push attempt failed because no credentials were configured.
 5. Produce a signed AAB and complete Play Console data-safety declarations, including deployed privacy and deletion URLs.
 6. Conduct a security review of admin actions, rate limits, and secret handling before production.
 
@@ -56,7 +60,10 @@ A release is blocked until:
 
 - All migrations and SQL tests pass in CI.
 - Admin typecheck, tests, and build pass.
-- Android debug build, unit tests, and instrumentation-APK compilation pass; instrumentation/runtime behavior for v1.2 and a release build with a real signing key are still required.
+- Android debug build, unit tests, instrumentation-APK compilation, connected
+  suite, and live mutation pass pass; accessibility fixes, a completed Urdu/RTL
+  and TalkBack pass, and a release build with a real signing key are still
+  required.
 - Edge Functions have execution evidence.
 - No service-role key or signing secret is present in tracked files or build artifacts.
 - `docs/KNOWN_ISSUES.md` is reviewed and deployment-specific risks are closed or explicitly accepted.

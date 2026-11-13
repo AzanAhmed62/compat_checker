@@ -10,12 +10,17 @@ This file records verified limitations and release blockers. Items are not specu
    testing against the local stack covered catalog, product detail, password
    sign-in, collection create/add/visibility, follow/unfollow, leaderboard,
    notification routing, guide Markdown, offline guide cache, cold and warm deep
-   links, light/dark themes, and Urdu/RTL. Not verified on device: the new
-   product/rule/evidence/guide contribution forms,
-   favorites/votes/comments/request/contribution mutations, account-deletion
-   request/cancel, full session-expiry handling, 200% font scale,
-   TalkBack/switch access, and native-speaker Urdu review. No signed AAB
-   exists; the debug APK is not a release build.
+   links, light/dark themes, and Urdu/RTL labels. A second live pass on
+   2026-11-12/13 covered the new product/rule/evidence/guide contribution forms,
+   rule voting, favorites, comments, product request submit/vote, and
+   account-deletion request/cancel; session refresh after expiry and signed-out
+   cleanup after server-side session revocation were also exercised. At 200%
+   font scale the bottom-navigation labels wrapped and clipped and discussion
+   author metadata wrapped poorly. Not verified on device: TalkBack/switch
+   access and native-speaker Urdu review; a repeat Urdu/RTL pass was interrupted
+   after reboot, and the device was left with `ur-PK` configured. The local
+   database was not reset after the mutation pass. No signed AAB exists; the
+   debug APK is not a release build.
 2. **Local full-stack coverage is partial.** A local Supabase stack with the
    pinned `public.ecr.aws/supabase/postgres:17.11.0.011` image was reset and
    exercised on 2026-11-12: all 13 migrations plus seed, Auth/PostgREST/RLS,
@@ -57,8 +62,10 @@ This file records verified limitations and release blockers. Items are not specu
 
 - Android collection, follow, public-profile, and leaderboard screens were
   exercised on a physical device against the local stack for the flows listed
-  in `docs/TEST_PLAN.md`. Broader social mutations and error states remain
-  unverified on device.
+  in `docs/TEST_PLAN.md`. The 2026-11-12/13 mutation pass also exercised
+  contributions, rule votes, favorites, comments, product requests/votes, and
+  account-deletion request/cancel. Broader error states and offline behavior for
+  those mutations remain unverified on device.
 - Compose instrumentation coverage currently targets the checker result summary
   (unknown, compatible, incompatible, same-product) and the Room 1-to-2
   migration; 5/5 passed on device on 2026-11-12 under v1.2 source. Browse,
@@ -66,8 +73,9 @@ This file records verified limitations and release blockers. Items are not specu
   dark-theme UI tests are not implemented.
 - Android now includes contribution forms for `new_product`, `new_rule`,
   `evidence`, and `guide` alongside the existing `product_edit` correction
-  path. Payload builders are unit-tested, but the forms have not been exercised
-  on a device or against the live stack.
+  path. Payload builders are unit-tested, and the forms were exercised on device
+  against the local stack (pending rows confirmed in SQL). Exhaustive
+  invalid-input and moderation permutations were not run on device.
 - Guide Markdown rendering is a deliberately small subset: headings,
   paragraphs, lists, quotes, fenced code, bold, italic, inline code, and
   absolute HTTP(S) links. Raw HTML is displayed as text, not interpreted.
@@ -91,9 +99,13 @@ This file records verified limitations and release blockers. Items are not specu
 - Email-confirmation and password-recovery deep links are not implemented in
   the mobile app. Local Supabase has confirmations disabled; production auth
   policy must be configured accordingly.
-- Urdu resources exist but have not received native-speaker or TalkBack review.
-- Accessibility has not been validated with TalkBack, switch access, or
-  large-font layouts.
+- Urdu resources exist but have not received native-speaker review. Label-level
+  Urdu/RTL rendering was smoke-tested earlier; a repeat Urdu/RTL pass on
+  2026-11-13 was interrupted after reboot and is not verified.
+- TalkBack and switch access have not been validated.
+- At 200% font scale the bottom-navigation labels wrap and clip, and discussion
+  author metadata wraps into a very narrow column. This needs a layout fix and
+  re-test before claiming large-font accessibility.
 - The privacy policy and deletion pages use `VITE_DATA_CONTROLLER` and
   `VITE_SUPPORT_EMAIL`; no real controller or support address is configured in
   this repository. Do not publish them with empty placeholders.
@@ -137,8 +149,9 @@ This file records verified limitations and release blockers. Items are not specu
   used successfully. Registry pulls may still be slow; do not replace the
   pinned image version to work around a transient pull failure.
 - CI has four jobs (database, admin, Edge Functions, Android). The workflow
-  succeeded on GitHub Actions at commit `58d30cc`; the local v1.2 commit has not
-  run remotely.
+  succeeded on GitHub Actions at commit `58d30cc`; the v1.2 commits remain local
+  because no GitHub credentials are configured, so their remote result has not
+  been observed.
 
 ## Resolved during the rebuild
 

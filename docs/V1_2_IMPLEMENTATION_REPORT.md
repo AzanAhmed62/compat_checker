@@ -1,9 +1,10 @@
 # v1.2 Implementation Report
 
-Date: 2026-11-12
+Date: 2026-11-12 (updated 2026-11-13)
 
-Status: local source, live-stack, browser, and device validation complete;
-committed locally; not pushed, deployed, or release-validated.
+Status: local source, live-stack, browser, and substantial device validation
+complete; committed locally; push blocked by missing GitHub credentials; not
+deployed or release-validated.
 
 ## Scope
 
@@ -280,6 +281,37 @@ result was **5 tests, 0 failures, 0 errors, 0 skipped** (7.131 s of device test
 time). Coverage was the Room 1-to-2 migration and the four checker result
 summaries (unknown, incompatible, compatible, same-product).
 
+A live mutation pass against the local stack followed on 2026-11-12/13 on the
+same device. The debug APK was rebuilt with the local Supabase URL and anon key
+and installed over `adb reverse tcp:55321 tcp:55321`. Observed results:
+
+- Signed-in `sample_contributor` submitted `new_product`, `new_rule` (one
+  citation), `guide` (one step), and standalone `evidence` contributions. All
+  four appeared as `Pending`; SQL confirmed the rows. The `new_product`
+  contribution did not create a product while pending.
+- Rule confirm vote produced **1 confirm** with a matching `rule_votes` row;
+  favorite produced `Saved` with a `favorites` row; the product comment was
+  stored with status `visible`. The discussion header still showed
+  `Discussion (2)` after the third comment until a reload.
+- A product request was created with status `open` and one vote was cast
+  (**1 vote**, matching `product_requests`/`request_votes` rows).
+- Account deletion request changed the account to `Deletion pending` with SQL
+  `account_status = deletion_pending` and `deletion_requested_at` set.
+  Cancellation restored `Account: Active`, cleared the timestamp, and showed a
+  confirmation message.
+- Forcing an expired stored access token with a valid refresh token caused an
+  automatic refresh: a new access token was stored and the session stayed
+  signed in. Revoking the server-side Auth session and forcing expiry cleared
+  the stored session and returned Profile to the signed-out state.
+- A 200% font-scale smoke test kept browse, product detail, and comment entry
+  usable, but bottom-navigation labels wrapped and clipped
+  (`Brows e`, `Check er`, `Guide s`, `Reque sts`) and discussion author metadata
+  wrapped every few characters. This is recorded as an accessibility defect.
+- A repeat Urdu/RTL pass set `system_locales` to `ur-PK,en-US` and rebooted the
+  device, but ADB disconnected before the app could be checked. The pass is not
+  verified and the device was left with the Urdu locale setting. TalkBack is
+  installed but was not exercised.
+
 ## Not run / blockers
 
 - **No hosted Edge Function validation.** Hosted deployment, scheduler
@@ -289,19 +321,21 @@ summaries (unknown, incompatible, compatible, same-product).
 - **No release validation.** There is no signing key, Play Console access,
   deployed privacy/deletion URL, production credential, or deployment
   authorization. No signed AAB exists.
-- **No remote CI run for v1.2.** The workflow succeeded at `58d30cc`; the v1.2
-  commit is local, so GitHub Actions has not seen it.
+- **Remote CI unavailable for v1.2.** The workflow succeeded at `58d30cc`; the
+  2026-11-13 push attempt failed because no GitHub HTTPS/SSH credentials are
+  configured, so GitHub Actions has not seen the v1.2 commits.
 - **Remaining browser coverage.** The public `/privacy` and `/delete-account`
   routes have not been tested against a deployed backend, full
   session-expiry/refresh handling is not browser-tested, and not every
   field-validation or moderation combination was exercised. A signed-in
   contributor remains on the login form until navigating to a protected route;
   this is a UX observation, not an access-control bypass.
-- **Remaining device coverage.** Contribution forms,
-  favorites/votes/comments/request/contribution mutations, account-deletion
-  request/cancel, full session-expiry handling, 200% font scale,
-  TalkBack/switch access, and native-speaker Urdu review were not exercised on
-  the device.
+- **Remaining device coverage.** TalkBack/switch-access validation,
+  native-speaker Urdu review, and a completed Urdu/RTL layout pass remain
+  outstanding. The staged Urdu pass was interrupted after reboot and the device
+  was left with `ur-PK` configured. The 200% font-scale pass found clipped
+  bottom-navigation labels and narrow discussion metadata. The local database
+  was not reset after the mutation pass, so synthetic Android rows remain.
 - **Disk headroom is low.** About 3.1 GB was free (98% used) at verification
   time; Gradle was run with `--no-daemon --no-configuration-cache
   --max-workers=1`.
@@ -310,22 +344,26 @@ summaries (unknown, incompatible, compatible, same-product).
 
 Local validation is coherent: all 13 migrations apply, all 8 SQL test files,
 admin typecheck/test/build, Edge typecheck/32 tests, live local Edge HTTP
-invocation, the full admin browser sweep, Android build/JVM tests, and the v1.2
-connected 5/5 device suite all pass. This is **not** a release validation.
-Release remains blocked by the missing signed AAB, store declarations, deployed
-legal/deletion URLs, hosted Edge deployment and scheduler configuration,
-production credentials, and authorized remote deployment. Browser gaps are
-limited to deployed legal/deletion integration, session-expiry refresh, and
-additional validation combinations.
+invocation, the full admin browser sweep, Android build/JVM tests, the v1.2
+connected 5/5 device suite, and the live Android mutation pass all pass. This is
+**not** a release validation. Release remains blocked by the missing signed
+AAB, store declarations, deployed legal/deletion URLs, hosted Edge deployment
+and scheduler configuration, production credentials, and authorized remote
+deployment. Browser gaps are limited to deployed legal/deletion integration,
+session-expiry refresh, and additional validation combinations. Device gaps
+remain for TalkBack/switch access, native-speaker Urdu review, a completed
+Urdu/RTL pass, and the 200% font-scale layout defect.
 
 ## Git state
 
 - Branch: `main`
 - Previous HEAD: `58d30cc` (`feat: ship v1.1 social and offline guide features`)
-- v1.2 changes: committed locally as a single commit on top of `58d30cc`; not
-  pushed. The commit includes the new migration, SQL test, Edge HTTP test, two
-  Android source files, one Android test file, and this report. Generated build
-  output is ignored.
+- v1.2 changes: committed as `7f3434c` on top of `58d30cc`, followed by a
+  documentation commit. Both remain local: `git push origin main` on 2026-11-13
+  failed with `could not read Username for 'https://github.com'` because no
+  HTTPS/SSH credentials are configured. The code commit includes the new
+  migration, SQL test, Edge HTTP test, two Android source files, one Android
+  test file, and this report. Generated build output is ignored.
 - Final verification sweep on 2026-11-12: **8/8 SQL test files**, **15/15 admin
   Vitest tests** plus typecheck/build, **32/32 Edge tests** plus typecheck, and
   **28/28 Android JVM tests** plus **5/5 connected tests**; `git diff --check`
@@ -334,5 +372,7 @@ additional validation combinations.
   `local.properties`, service-role secret, or private key. Test-only fake
   credentials are confined to test code. No NUL-byte file corruption was found
   in the documentation after the earlier interrupted-write check.
-- No push, deployment, remote Supabase mutation, or release action was
-  performed. The local v1.2 commit has not run in GitHub Actions.
+- The 2026-11-13 push attempt failed before contacting the remote
+  (`fatal: could not read Username for 'https://github.com': No such device or
+  address`). No deployment, remote Supabase mutation, or release action was
+  performed. GitHub Actions has not run the v1.2 commits.

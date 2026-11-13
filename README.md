@@ -147,7 +147,8 @@ Version `1.2.0` adds:
 
 ## Verification status
 
-Observed in this workspace on 2026-11-12 for the v1.2 source:
+Observed in this workspace on 2026-11-12 for the v1.2 source, with an Android
+mutation pass on 2026-11-12/13:
 
 - Database: **8 SQL/RLS test files passed** with the plain-PostgreSQL runner
   after all **13 migrations** and the updated seed. The live local stack was
@@ -163,7 +164,11 @@ Observed in this workspace on 2026-11-12 for the v1.2 source:
   `:app:assembleDebugAndroidTest` passed; **28 JVM tests in 7 test classes**
   passed with no failures. Version is `1.2.0` (version code 3). The v1.2
   connected suite passed **5/5** on a physical OnePlus A6010 (Android 11) on
-  2026-11-12.
+  2026-11-12. The live mutation pass verified all four contribution forms, rule
+  voting, favorites, comments, product request submit/vote, account-deletion
+  request/cancel, token refresh after expiry, and signed-out cleanup after
+  session revocation. A 200% font-scale smoke test found clipped bottom-nav
+  labels; see `docs/KNOWN_ISSUES.md`.
 - Edge Functions: Deno typecheck passed; **32 tests passed** with 0 failures,
   including eight HTTP-level tests over ephemeral localhost servers with
   injected auth/database fakes. Live local invocation with the real Edge
@@ -177,8 +182,9 @@ Observed in this workspace on 2026-11-12 for the v1.2 source:
   Edge HTTP invocation, and the full admin browser sweep were exercised. Hosted
   deployment remains unverified.
 - CI has database, admin, Edge Function, and Android jobs. The workflow
-  succeeded on GitHub Actions at commit `58d30cc`; the local v1.2 commit has not
-  run remotely.
+  succeeded on GitHub Actions at commit `58d30cc`; the v1.2 commits remain local
+  because no GitHub credentials are configured, so their remote result has not
+  been observed.
 - No remote Supabase project, Play signing key, or Play Console access has been
   used.
 
